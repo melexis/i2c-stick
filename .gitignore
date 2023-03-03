@@ -1,0 +1,11 @@
+dist
+*/build
+web-interface/*.html
+!web-interface/index.jinja2.html
+!web-interface/google*.html
+/firmware_list.md
+*.min.js
+*.min.css
+!web-interface/assets/**/*.min.js
+!web-interface/assets/**/*.min.css
+web-interface/melexis-bulma.css

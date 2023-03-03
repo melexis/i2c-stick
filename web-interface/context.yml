@@ -1,0 +1,7 @@
+versioning:
+  web_interface: Mar 2023
+  firmware: V1.2.0
+
+
+drivers:
+  - !include mlx90632_interface.yml

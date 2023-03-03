@@ -1,0 +1,220 @@
+@charset "utf-8";
+
+// Set your brand colors
+$melexis-royal-blue: #00354B;
+$melexis-coral-red: #DB4140;
+$melexis-electric-green: #65BBA9;
+$melexis-gold-yellow: #EEA320;
+$melexis-charcoal-grey: #3e4242;
+$melexis-steel-grey: #b2c4cb;
+
+// Update Bulma's global variables
+$family-sans-serif: Lato,Helvetica,Arial,sans-serif;
+$primary: $melexis-electric-green;
+$link: $melexis-royal-blue;
+$info: $melexis-steel-grey;
+$success: $melexis-electric-green;
+$warning: $melexis-gold-yellow;
+$danger: $melexis-coral-red;
+$dark: $melexis-charcoal-grey;
+$text: $melexis-royal-blue;
+
+
+$widescreen-enabled: true;
+$fullhd-enabled: true;
+
+// Update some of Bulma's component variables
+/*$control-border-width: 2px;*/
+/*$input-border-color: transparent;*/
+$input-shadow: none;
+
+
+
+// Import only what you need from Bulma
+@import "../node_modules/bulma/sass/utilities/_all.sass";
+@import "../node_modules/bulma/sass/base/_all.sass";
+/*@import "../node_modules/bulma/sass/elements/_all.sass";*/
+@import "../node_modules/bulma/sass/elements/button.sass";
+@import "../node_modules/bulma/sass/elements/content.sass";
+@import "../node_modules/bulma/sass/elements/container.sass";
+@import "../node_modules/bulma/sass/elements/title.sass";
+@import "../node_modules/bulma/sass/form/_all.sass";
+@import "../node_modules/bulma/sass/grid/columns.sass";
+@import "../node_modules/bulma/sass/components/navbar.sass";
+@import "../node_modules/bulma/sass/components/tabs.sass";
+@import "../node_modules/bulma/sass/layout/hero.sass";
+@import "../node_modules/bulma/sass/layout/section.sass";
+
+
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url(assets/site/lato_1.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 300;
+    font-display: swap;
+    src: url(assets/site/lato_2.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(assets/site/lato_3.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(assets/site/lato_4.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* latin-ext */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(assets/site/lato_5.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+    font-family: 'Lato';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(assets/site/lato_6.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+body{
+  font-weight: lighter;
+}
+
+
+/* navbar */
+nav.navbar .is-active {
+  font-weight: bold;
+  border-top: solid;
+  border-color: $melexis-electric-green;
+}
+
+/* little line */
+nav.navbar .navbar-start > a.navbar-item.is-active {
+  font-weight: bold;
+  border-top: solid;
+  border-color: $melexis-electric-green;
+}
+
+nav.navbar .navbar-start > a.navbar-item:not(.is-active) {
+	color: white;
+	filter: brightness(70%);
+}
+
+
+/* hide templates and place holders */
+div#serial_port, div.template
+{
+  display: none;
+}
+
+
+div.is-text-light  > * {
+  color: $text-light;
+}
+
+div.is-text-small  > * {
+  font-size: $size-small;
+}
+
+h2 {
+  font-size: 28px;
+}
+
+div.content{
+	margin: 10px;
+	margin-top: 20px;
+}
+
+div.content h2{
+	font-size: 28px;
+	font-weight: lighter;
+}
+
+div.content h3{
+	font-size: 24px;
+	font-weight: lighter;
+	color: $melexis-electric-green;
+}
+
+div.content a{
+	color: $melexis-electric-green;
+}
+
+div#tabs_main > div:not(.is-active)
+{
+  display: none;
+}
+
+
+div.tabs > ul > li > a{
+  margin-bottom: 0px;
+}
+
+div.tabs > ul > li.is-active{
+  background-color: $melexis-electric-green;
+}
+
+div.tabs ~ div.tab_content:not(.is-active)
+{
+  display: none;
+}
+
+
+fieldset {
+  border-width: 1px;
+  border-color: $melexis-royal-blue;
+  border-style: solid;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-bottom: 10px;
+}
+
+fieldset > legend {
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+div.slaves > button.is-small {
+  padding: 3px;
+}
+
+div.is-no-margin{
+  margin: 0px !important;
+}
+
+section#serial_terminal {
+  line-height: 10px;
+}
+
+pre{
+  line-height: 10px;
+  padding: 0px !important;
+  margin-bottom: 0px;
+  font-size: 10px;
+  display: inline;
+  background-color: transparent;
+}

@@ -1,0 +1,18 @@
+
+drivers:
+  - id: 1
+    name: MLX90614
+    scr_name: mlx90614
+    function_id: '90614'
+  - id: 2
+    name: MLX90640
+    scr_name: mlx90640
+    function_id: '90640'
+  - id: 3
+    name: MLX90641
+    scr_name: mlx90641
+    function_id: '90641'
+  - id: 4
+    name: MLX90632
+    scr_name: mlx90632
+    function_id: '90632'

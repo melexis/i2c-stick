@@ -1,0 +1,17 @@
+{
+  "name": "melexis-i2c-stick-interface",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sass/melexis-bulma.scss",
+  "scripts": {
+    "css-build": "node-sass --omit-source-map-url sass/melexis-bulma.scss ../melexis-bulma.css",
+    "css-watch": "npm run css-build -- --watch",
+    "start": "npm run css-watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "bulma": "^0.9.4",
+    "node-sass": "^8.0.0"
+  }
+}

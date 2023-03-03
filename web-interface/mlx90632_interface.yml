@@ -1,0 +1,77 @@
+id: mlx90632
+text: MLX90632
+version: '1.0.0'
+
+diaglogs:
+  - id: configure
+    content:
+      - widget: tabulator
+        active: dev
+        tabs:
+          - id: hub
+            text: HUB
+            childrens:
+              - id: SA
+                text: Slave Address
+                widget: integer
+                range: 4, 126
+              - id: DRV
+                text: Driver
+                widget: combobox
+                values:
+                  - [ 0, "None"]
+                  - [ 1, "MLX90614"]
+                  - [ 2, "MLX9064x"]
+                  - [ 3, "MLX90640"]
+                  - [ 4, "MLX90641"]
+                  - [ 5, "MLX90632"]
+                  - [ 6, ""]
+                  - [ 7, ""]
+                  - [ 8, ""]
+                  - [ 9, ""]
+                  - [10, ""]
+                  - [11, ""]
+                  - [12, ""]
+                  - [13, ""]
+                  - [14, ""]
+                  - [15, "PT100-ADS122C"]
+          - id: dev
+            text: Device
+            childrens:
+              - id: RR
+                text: Refresh Rate
+                widget: combobox
+                values: 
+                  - [0, "0.5Hz (0)"]
+                  - [1, " 1Hz (1)"]
+                  - [2, " 2Hz (2)"]
+                  - [3, " 4Hz (3)"]
+                  - [4, " 8Hz (4)"]
+                  - [5, "16Hz (5)"]
+                  - [6, "32Hz (6)"]
+                  - [7, "64Hz (7)"]
+              - id: MODE
+                text: Operation Mode
+                widget: combobox
+                values:
+                  - [1, "Sleep Step (1)"]
+                  - [3, "Continious (3)"]
+          - id: cal
+            text: Calibration
+            childrens:
+              - id: EM
+                text: Emissivity
+                widget: float
+                range: 0.1, 1
+                unit: x
+              - id: reflected_temperature_src
+                text: Reflected Temperature Input
+                widget: combobox
+                values: 
+                  - ['ta', "Ambient Temperature from Sensor"]
+                  - ['man', "Manual; according to the below setting"]
+              - id: reflected_temperature
+                text: Reflected Temperature
+                widget: float
+                range: -100, 1000
+                unit: Deg C
