@@ -1,0 +1,4 @@
+# MANIFEST.in
+
+include *.toml
+include CONTRIBUTING.md

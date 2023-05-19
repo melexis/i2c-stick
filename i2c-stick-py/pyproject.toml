@@ -1,0 +1,48 @@
+# pyproject.toml
+
+[build-system]
+requires      = ["setuptools>=63.2.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "melexis-i2c-stick"
+version = "0.1.4"
+description = "Melexis I2C Stick, python interface"
+readme = "README.md"
+authors = [{ name = "Karel Vanroye", email = "kva@melexis.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["Melexis", "I2C", "sensors", "demo"]
+dependencies = [
+    'bincopy>=17.14.5',
+    'pyserial>=3.5',
+]
+requires-python = ">=3.9"
+
+[project.optional-dependencies]
+dev = []
+
+[project.urls]
+Homepage = "https://github.com/melexis/i2c-stick"
+
+# [project.scripts]
+# melexis_i2c_stick = "melexis.i2c_stick.__main__:main"
+
+
+[tool.bumpver]
+current_version = "0.1.4"
+version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
+commit_message = "bump version {old_version} -> {new_version}"
+commit = false
+tag = false
+push = false
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+    'version = "{version}"',
+]
+
