@@ -38,8 +38,6 @@ jobs:
         TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
         TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
-        find -type f
         cd i2c-stick-py
-        pwd
         python setup.py sdist bdist_wheel
         twine upload dist/*
