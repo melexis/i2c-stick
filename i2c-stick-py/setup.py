@@ -4,7 +4,7 @@ import platform
 from setuptools import find_namespace_packages
 
 
-version='0.1.0'
+version='0.1.1'
 
 requires = ['bincopy>=17.14.5',
             'pyserial>=3.5',
