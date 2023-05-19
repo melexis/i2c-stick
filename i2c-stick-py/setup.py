@@ -28,7 +28,6 @@ setup(
     license='Apache License, Version 2.0',
     install_requires=requires,
     url = 'https://github.com/melexis/i2c-stick',   # Provide either the link to your github or to your website
-    download_url = 'https://github.com/melexis/i2c-stick/archive/melexis-i2c-stick-py-V'+version+'.tar.gz',
     packages=find_namespace_packages(include=['mynamespace.*']),
     classifiers=[
         # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
