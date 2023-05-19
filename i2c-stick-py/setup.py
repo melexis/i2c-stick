@@ -4,7 +4,7 @@ import platform
 from setuptools import find_namespace_packages
 
 
-version='0.1.1'
+version='0.1.2'
 
 requires = ['bincopy>=17.14.5',
             'pyserial>=3.5',
@@ -47,4 +47,5 @@ setup(
         'Programming Language :: Python :: 3.10',
         'Topic :: Utilities',
     ],
+    zip_safe=False,
 )
