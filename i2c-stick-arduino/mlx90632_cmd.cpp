@@ -642,8 +642,10 @@ cmd_90632_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
       // ==> write zero before writing the data!
       if (mem_data[i] != 0)
       {
+        _mlx90632_i2c_write(sa, 0x3005, 0x554C); // send unlock key to gain write access to EEPROM!
         _mlx90632_i2c_write(sa, addr, 0);
       }
+      _mlx90632_i2c_write(sa, 0x3005, 0x554C); // send unlock key to gain write access to EEPROM!
     }
     int32_t result = _mlx90632_i2c_write(sa, addr, mem_data[i]);
 

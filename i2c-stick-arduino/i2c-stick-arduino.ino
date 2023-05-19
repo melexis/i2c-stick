@@ -243,6 +243,13 @@ hal_i2c_indirect_read(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes,
 
 
 void
+hal_i2c_set_pwm(uint8_t pin_no, uint8_t pwm)
+{
+  analogWrite(pin_no, pwm);
+}
+
+
+void
 setup()
 {
 #ifdef ENABLE_USB_MSC

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 
 // arduino should not be here, it is only to ease debugging
-//#include <Arduino.h>
+// #include <Arduino.h>
 
 
 #ifdef __cplusplus
@@ -479,6 +479,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
         const char *error_message;
         char buf[16]; memset(buf, 0, sizeof(buf));
         uint8_t is_ok = 0;
+        uint8_t is_known_driver = 0;
 
         count_slaves++;
         g_sa_list[sa].spot_ = 0;
@@ -495,7 +496,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
             {
               continue;
             }
-
+            is_known_driver = 1;
             // ok we are good to go!
             send_answer_chunk(channel_mask, this_cmd, 0);
             send_answer_chunk(channel_mask, ":", 0);
@@ -516,6 +517,14 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
             g_sa_list[sa].spot_ = spot;
             break;
           }
+        }
+        if (!is_known_driver)
+        {
+          send_answer_chunk(channel_mask, this_cmd, 0);
+          send_answer_chunk(channel_mask, ":", 0);
+          uint8_to_hex(buf, sa);
+          send_answer_chunk(channel_mask, buf, 0);
+          send_answer_chunk(channel_mask, ":00,00,00,Unknown", 1);
         }
       }
     }
@@ -647,6 +656,46 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     }
 
     handle_cmd_mv(sa, channel_mask);
+    return NULL;
+  }
+
+  this_cmd = "pwm"; // Pulse With Modulation command
+  if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
+  {
+    int16_t pin_no = -1;
+    if (cmd[strlen(this_cmd)] == ':')
+    {
+      const char *p = cmd+strlen(this_cmd)+1;
+      if (('0' <= *p) && (*p <= '9'))
+      {
+        pin_no = atoi(p);
+      }
+    }
+    if (pin_no >= 0)
+    {
+      const char *p = strchr(cmd+strlen(this_cmd)+1, ':');
+      int16_t pwm = -1;
+      if (p)
+      {
+        pwm = atoi(p+1);
+      }
+      if ((pwm >= 0) && (pwm <= 255))
+      {
+        hal_i2c_set_pwm(pin_no, pwm);
+        send_answer_chunk(channel_mask, this_cmd, 0);
+        send_answer_chunk(channel_mask, ":OK", 1);
+      } else
+      {
+        send_answer_chunk(channel_mask, this_cmd, 0);
+        send_answer_chunk(channel_mask, ":FAIL:Invalid pwm value", 1);
+      }
+    } else
+    {
+      send_answer_chunk(channel_mask, this_cmd, 0);
+      send_answer_chunk(channel_mask, ":FAIL:pwm invalid pin_no", 1);
+    }
+
+
     return NULL;
   }
 
