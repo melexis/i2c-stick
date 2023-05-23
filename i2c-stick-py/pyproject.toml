@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "melexis-i2c-stick"
-version = "0.1.5"
+version = "0.2.0"
 description = "Melexis I2C Stick, python interface"
 readme = "README.md"
 authors = [{ name = "Karel Vanroye", email = "kva@melexis.com" }]
@@ -31,12 +31,12 @@ dev = []
 [project.urls]
 Homepage = "https://github.com/melexis/i2c-stick"
 
-# [project.scripts]
-# melexis_i2c_stick = "melexis.i2c_stick.__main__:main"
+[project.scripts]
+melexis_i2c_stick = "melexis.i2c_stick.__main__:main"
 
 
 [tool.bumpver]
-current_version = "0.1.5"
+current_version = "0.2.0"
 version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
 commit_message = "bump version {old_version} -> {new_version}"
 commit = false

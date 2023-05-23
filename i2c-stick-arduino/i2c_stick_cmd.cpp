@@ -299,7 +299,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
     char buf[16]; memset(buf, 0, sizeof(buf));
-    send_answer_chunk(channel_mask, "fv:" FW_VERSION, 0);
+    send_answer_chunk(channel_mask, "fv:" FW_VERSION, 1);
     return NULL;
   }
 

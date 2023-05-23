@@ -299,10 +299,10 @@ Meaning: The sensor at slave address 3A has new data.
 Read the memory content of the selected sensor.
 
 Format: `mr::<address>` + `LF`  
-or
-Format: `mr:` + `sa` + `:<address>` + `LF`
-or
-Format: `mr:` + `sa` + `:<address>,<address_count>` + `LF`
+or  
+Format: `mr:` + `sa` + `:<address>` + `LF`  
+or  
+Format: `mr:` + `sa` + `:<address>,<address_count>` + `LF`  
 
 Note: `<address>` and `<address_count>` are in hex format with 4 characters (always)
 
@@ -318,10 +318,10 @@ receive: `mr:3A:2400,10,01,0003,DATA,EF4A,3480` + `LF`
 Write the memory content of the selected sensor.
 
 Format: `mw::<address>,<data>` + `LF`  
-or
-Format: `mr:` + `sa` + `:<address>,<data>` + `LF`
-or
-Format: `mr:` + `sa` + `:<address>,<data>,<data+1>,..` + `LF`
+or  
+Format: `mr:` + `sa` + `:<address>,<data>` + `LF`  
+or  
+Format: `mr:` + `sa` + `:<address>,<data>,<data+1>,..` + `LF`  
 
 Note: `<address>` and `<data>` are in hex format with 4 characters (always)
 
