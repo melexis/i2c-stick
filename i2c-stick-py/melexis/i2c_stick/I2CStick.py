@@ -262,13 +262,51 @@ class I2CStick:
                 self.ser.timeout = timeout_old
                 return None
             if a[2] == "RO":
-                if 'RO' not in result.keys():
+                if 'read_only' not in result.keys():
                     result['read_only'] = {}
                 a = a[3].split("=")
-                result['read_only'][a[0]] = a[1]
+                value = a[1].split(",")
+                for i, v in enumerate(value):
+                    regex = r"(?P<value>[^\s\(\)]+)(?:\((?P<description>\S+)\))?"
+                    new_value = re.match(regex, v).groupdict()
+                    if (new_value['value'][:1].isdigit() or new_value['value'][:1] == '-') & (a[0] != 'SA'):
+                        try:
+                            new_value['value'] = int(new_value['value'])
+                        except:
+                            try:
+                                new_value['value'] = float(new_value['value'])
+                            except:
+                                None
+                            None
+                    if new_value['description'] is not None:
+                        value[i] = new_value
+                    else:
+                        value[i] = new_value['value']
+                if (len(value) == 1):
+                    value = value[0]
+                result['read_only'][a[0]] = value
             else:
                 a = a[2].split("=")
-                result[a[0]] = a[1]
+                value = a[1].split(",")
+                for i, v in enumerate(value):
+                    regex = r"(?P<value>[^\s\(\)]+)(?:\((?P<description>\S+)\))?"
+                    new_value = re.match(regex, v).groupdict()
+                    if (new_value['value'][:1].isdigit() or new_value['value'][:1] == '-') & (a[0] != 'SA'):
+                        try:
+                            new_value['value'] = int(new_value['value'])
+                        except:
+                            try:
+                                new_value['value'] = float(new_value['value'])
+                            except:
+                                None
+                            None
+                    if new_value['description'] is not None:
+                        value[i] = new_value
+                    else:
+                        value[i] = new_value['value']
+                if (len(value) == 1):
+                    value = value[0]
+                result[a[0]] = value
             start = time.time()
             a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
             t = time.time() - start
