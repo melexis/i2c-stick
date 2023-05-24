@@ -228,7 +228,7 @@ cmd_90632_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":RR=", 0);
-  uint8_to_hex(buf, rr);
+  itoa(rr, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
