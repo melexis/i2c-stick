@@ -1525,7 +1525,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     default:
       value = "Unknown";
   }
-  sprintf(buf, "%s(%d)", value, fmt);
+  sprintf(buf, "%d(%s)", fmt, value);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "ch:I2C_FREQ=", 0);
@@ -1553,7 +1553,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     default:
       value = "Unknown";
   }
-  sprintf(buf, "%s(%d)", value, freq);
+  sprintf(buf, "%d(%s)", freq, value);
   send_answer_chunk(channel_mask, buf, 1);
 
   for (uint16_t spot=1; spot<MAX_SA_DRV_REGISTRATIONS; spot++)
@@ -1565,7 +1565,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     { // skip empty spots
       continue;
     }
-    send_answer_chunk(channel_mask, "SA_DRV:", 0);
+    send_answer_chunk(channel_mask, "ch:SA_DRV=", 0);
     uint8_to_hex(buf, sa);
     send_answer_chunk(channel_mask, buf, 0);
     send_answer_chunk(channel_mask, ",", 0);
@@ -1582,7 +1582,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     { // skip the unknown drv id's
       continue;
     }
-    send_answer_chunk(channel_mask, "DRV:", 0);
+    send_answer_chunk(channel_mask, "ch:DRV=", 0);
     uint8_to_hex(buf, drv);
     send_answer_chunk(channel_mask, buf, 0);
     send_answer_chunk(channel_mask, ",", 0);

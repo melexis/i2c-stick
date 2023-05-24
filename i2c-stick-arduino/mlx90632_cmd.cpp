@@ -265,7 +265,7 @@ cmd_90632_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":MODE=", 0);
-  uint8_to_hex(buf, mode);
+  itoa(mode, buf, 10);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, p, 1);
 
@@ -295,13 +295,15 @@ cmd_90632_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   uint16_t data = 0;
   _mlx90632_i2c_read(sa, 0x2409, &data); // PRODUCT CODE
   data &= 0x0F; // ACC
-  p = "Unknown";
-  if (data == 1) p = "Medical";
-  if (data == 2) p = "Commercial";
+  p = "(Unknown)";
+  if (data == 1) p = "(Medical)";
+  if (data == 2) p = "(Commercial)";
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":RO:ACC=", 0);
+  itoa(data, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, p, 1);
 
   data = 0;
