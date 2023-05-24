@@ -14,13 +14,13 @@ Check communication with MCU and return "Melexis Inspired Engineering".
 
 Send: `mlx` + `LF`
 
-Receive: 
- - `mlx:MELEXIS I2C STICK`             + `LF`                    
- - `mlx:=================`             + `LF`                    
- - `mlx:`                              + `LF`       
- - `mlx:Melexis Inspired Engineering`  + `LF`                                   
- - `mlx:`                              + `LF`       
- - `mlx:hit '?' for help`              + `LF`                       
+Receive:
+ - `mlx:MELEXIS I2C STICK`             + `LF`
+ - `mlx:=================`             + `LF`
+ - `mlx:`                              + `LF`
+ - `mlx:Melexis Inspired Engineering`  + `LF`
+ - `mlx:`                              + `LF`
+ - `mlx:hit '?' for help`              + `LF`
 
 ### `fv` - Firmware Version Command
 
@@ -82,7 +82,7 @@ Send: READ: `i2c:` + `sa` + `:R:` + `<#bytes to read>:<STATUS>` + `LF`
 
 Receive example: `i2c:3A:R:FF:OK` + `LF`
 
-Meaning: 
+Meaning:  
 Send: read from slave address 3A(hex, 7 bit), 1 byte.  
 Receive: First byte is FF hex.
 
