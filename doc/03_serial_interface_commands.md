@@ -120,6 +120,55 @@ Meaning: read at register address 3004h from slave address 3A(hex, 7 bit), 2 byt
 
 The first byte is 0x5A, the 2nd is 0x69.
 
+### `ch` - get Configure Host command
+
+Get the configuration of the host:  
+- the format of the communication
+- the I2C frequency
+- which drivers there are provided by the firmware
+- The slave address assosiations with the drivers
+
+Send: `ch` + `LF`
+
+Receive: `ch:<configuration>=<value>[(<description>)]` + `LF`
+
+Receive example:
+```
+ch:FORMAT=0(DEC)
+ch:I2C_FREQ=0(100kHz)
+ch:SA_DRV=5A,01,MLX90614
+ch:SA_DRV=3E,01,MLX90614
+ch:SA_DRV=33,02,MLX90640
+ch:SA_DRV=33,03,MLX90641
+ch:SA_DRV=3A,04,MLX90632
+ch:DRV=01,MLX90614
+ch:DRV=02,MLX90640
+ch:DRV=03,MLX90641
+ch:DRV=04,MLX90632
+```
+
+### `+ch` - set Configure Host command
+
+Set the configuration of the host:  
+- the format of the communication
+- the I2C frequency
+- which drivers there are provided by the firmware
+- The slave address assosiations with the drivers
+
+Send: `+ch:<configuration>=<value>|<description>` + `LF`
+
+Receive: `+ch:<status> [<where the configuration is stored>]` + `LF`
+
+Send example:  
+```
++ch:FORMAT=DEC
+```
+
+Receive example:  
+```
++ch:OK [host-register]
+```
+
 ### `scan` - Scan I2C bus command
 
 Scan the I2C bus and look at which slave address returns an
