@@ -1,5 +1,6 @@
 import serial
 import time
+import re
 
 class I2CStick:
     ser = None
@@ -104,7 +105,49 @@ class I2CStick:
 
 
     def ch(self):
-        return None
+        result = {}
+        timeout_old = self.ser.timeout
+        self.ser.timeout = 0.25
+
+        a = self.run_cmd("ch")
+        t = 0
+        while t < 0.1:
+            a = a.split(":")
+            if a[0] != "ch":
+                self.ser.timeout = timeout_old
+                return None
+            else:
+                # regex ==> https://regex101.com/r/ltml2J/1
+                regex = r"(?P<key>\S+)=(?P<value>[^\s\(\)]+)(?:\((?P<description>\S+)\))?"
+                r = re.match(regex, a[1])
+                item = r.groupdict()
+                key = item['key']
+                if key not in result.keys():
+                    result[key] = []
+                item.pop('key')
+                if key == "SA_DRV":
+                    new_item = {}
+                    sa, drv, product = item['value'].split(',')
+                    new_item['SA'] = int(sa, 16)
+                    new_item['DRV'] = int(drv, 16)
+                    new_item['product'] = product
+                    result[key].append(new_item)
+                elif key == "DRV":
+                    new_item = {}
+                    drv, product = item['value'].split(',')
+                    new_item['DRV'] = int(drv, 16)
+                    new_item['product'] = product
+                    result[key].append(new_item)
+                else:
+                    result[key].append(item)
+
+            start = time.time()
+            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            t = time.time() - start
+
+        self.ser.timeout = timeout_old
+
+        return result
 
 
     def ch_write(self):
