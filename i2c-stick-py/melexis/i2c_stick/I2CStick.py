@@ -411,6 +411,7 @@ class I2CStick:
         result = {}
         result['time_ms'] = int(a[2])
         result['values'] = [int(x, 16) for x in a[3].split(',')]
+        result['values'] = [x if x < 2**15 else x - 2**16 for x in result['values']]
         return result
 
 
