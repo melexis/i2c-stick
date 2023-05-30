@@ -4,17 +4,11 @@
 // FW Configuration
 // ****************
 
-#define FW_VERSION "V1.3.2"
+#define FW_VERSION "V1.3.3"
 
 
 // enable/disable modules
 // ======================
-#define DEVICE_PT100_ADS122C_ENABLE
-//#undef DEVICE_PT100_ADS122C_ENABLE
-
-//#define DEVICE_MLX90640_TEST_ENABLE
-//#undef DEVICE_MLX90640_TEST_ENABLE
-
 //#define BUFFER_COMMAND_ENABLE
 #undef BUFFER_COMMAND_ENABLE
 

@@ -151,9 +151,16 @@ cmd_90632_nd(uint8_t sa, uint8_t *nd, char const **error_message)
 
   if (reg_status & MLX90632_STATUS_NEW_DATA) // new data bit is set!
   {
-    if (mlx->adc_data_.RAM_6_ == 0) /* first time */
+    if (mlx->meas_select_ < 3) // only in normal application mode!
     {
-      if (cycle_pos == 2) // check we have a full dataset!
+      if (mlx->adc_data_.RAM_6_ == 0) /* first time */
+      {
+        if (cycle_pos == 2) // check we have a full dataset!
+        {
+          mlx->adc_data_.RAM_6_ = 1; // incase there is no 'MV' there is no update, keep nd=1 in that case...
+          *nd = 1;
+        }
+      } else
       {
         *nd = 1;
       }
@@ -268,6 +275,20 @@ cmd_90632_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   itoa(mode, buf, 10);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, p, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":MEAS_SELECT=", 0);
+  itoa(mlx->meas_select_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":MEAS_COUNT=", 0);
+  itoa(mlx->meas_count_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
@@ -484,6 +505,69 @@ cmd_90632_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
     } else
     {
       send_answer_chunk(channel_mask, ":MODE=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "MEAS_SELECT=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t meas_select = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((meas_select >= 0) && (meas_select <= 31))
+    {
+      // update REG_CONTROL value with meas_select
+      uint16_t reg_control;
+      _mlx90632_i2c_read(mlx->slave_address_, MLX90632_REG_CONTROL, &reg_control);
+      reg_control &= ~0x01F0; /* Set meas_select bits to zero */
+      reg_control |= (meas_select << 4); /* Set needed meas_select bits to one */
+      _mlx90632_i2c_write(mlx->slave_address_, MLX90632_REG_CONTROL, reg_control);
+
+      // update the host register
+      mlx->meas_select_ = meas_select;
+      mlx->meas_count_ = 0; // next time raw-command is run, it will auto-count the amount!
+
+      // reset the new_data bits...
+      {
+        uint16_t reg_status;
+        _mlx90632_i2c_read(mlx->slave_address_, MLX90632_REG_STATUS, &reg_status);
+        reg_status &= ~(MLX90632_STATUS_NEW_DATA | MLX90632_STATUS_EOC);
+        _mlx90632_i2c_write(mlx->slave_address_, MLX90632_REG_STATUS, reg_status);
+      }
+
+      /* HALT & go back to previous mode in order to 'activate' the new MEAS_SELECT value */
+      {
+        MLX90632_Reg_Mode mode;
+        _mlx90632_reg_read_mode(mlx, &mode);
+        _mlx90632_reg_write_mode(mlx, MLX90632_REG_MODE_HALT);
+        _mlx90632_reg_write_mode(mlx, mode);
+      }
+
+      // report answer back to the command.
+      send_answer_chunk(channel_mask, ":MEAS_SELECT=OK [host&mlx-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":MEAS_SELECT=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "MEAS_COUNT=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t meas_count = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((meas_count >= 0) && (meas_count <= 31))
+    {
+      mlx->meas_count_ = meas_count;
+      send_answer_chunk(channel_mask, ":MEAS_COUNT=OK [host-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":MEAS_COUNT=FAIL; outbound", 1);
     }
     return;
   }
@@ -728,27 +812,38 @@ cmd_90632_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **
     _mlx90632_initialize(mlx, sa);
   }
 
-  if (*raw_count < 6)
+  if (mlx->meas_count_ == 0)
+  { // undefined length of the meas; let's count...
+    uint16_t meas;
+    for (uint8_t i = mlx->meas_select_; i<32; i++)
+    {
+      _mlx90632_i2c_read_block(mlx->slave_address_, MLX90632_EE_MEAS_BASE + i, &meas, 1);
+      if (meas == 0xFFFF)
+        break;
+      mlx->meas_count_++;
+    }
+  }
+
+  if (*raw_count < (1 + (3 * mlx->meas_count_)))
   {
     *raw_count = 0; // input buffer not long enough, report nothing.
     *error_message = MLX90632_ERROR_BUFFER_TOO_SMALL;
     return;
   }
-  *raw_count = 6;
+  *raw_count = 1 + (3 * mlx->meas_count_);
 
-  int16_t e = _mlx90632_read_adc(mlx);
-  if (e != 0)
+  /* reset bit NEW_DATA and EOC */
+  uint16_t cycle_pos = 0;
   {
-    *raw_count = 0;
-    *error_message = MLX90632_ERROR_COMMUNICATION;
-    return;
+    uint16_t reg_status;
+    if (_mlx90632_i2c_read(mlx->slave_address_, MLX90632_REG_STATUS, &reg_status) < 0) return;
+    reg_status &= ~(MLX90632_STATUS_NEW_DATA | MLX90632_STATUS_EOC);
+    if (_mlx90632_i2c_write(mlx->slave_address_, MLX90632_REG_STATUS, reg_status) < 0) return;
+    cycle_pos = (reg_status & MLX90632_STATUS_CYCLE_POSITION) >> 2;
   }
-  uint16_t *pointer = (uint16_t *)&mlx->adc_data_;
 
-  for (int16_t i=0; i<6; i++)
-  {
-    raw_list[i] = pointer[i];
-  }
+  raw_list[0] = cycle_pos;
+  if (_mlx90632_i2c_read_block(mlx->slave_address_, MLX90632_ADDR_RAM + 3 * mlx->meas_select_, &raw_list[1], 3 * mlx->meas_count_)) return;
 }
 
 

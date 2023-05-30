@@ -316,8 +316,18 @@ class I2CStick:
         return result
 
 
-    def cs_write(self, sa):
-        return None
+    def cs_write(self, sa, item, value):
+        a = self.run_cmd("+cs:{:02X}:{}={}".format(sa, item, value))
+        a = a.split(":")
+        # +cs:3A:MEAS_SELECT=OK [host&mlx-register]'
+        # '+cs:3A:FAIL; unknown variable'
+        if a[0] != "+cs":
+            return None
+        if a[1] != "{:02X}".format(sa):
+            return None
+        if a[2].startswith("FAIL"):
+            return a[2]
+        return a[2]
 
 
     def nd(self, sa):
@@ -398,7 +408,9 @@ class I2CStick:
         if a[2] == "FAIL":
             return "FAIL:" + a[3]
         result = {}
-        result['values'] = [int(x, 16) for x in a[2].split(',')]
+        result = {}
+        result['time_ms'] = int(a[2])
+        result['values'] = [int(x, 16) for x in a[3].split(',')]
         return result
 
 

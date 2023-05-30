@@ -1108,6 +1108,10 @@ handle_cmd_raw(uint8_t sa, uint8_t channel_mask)
     send_answer_chunk(channel_mask, "FAIL: no device driver assigned", 1);
     return;
   }
+  uint32_t time_stamp = hal_get_millis(); // update timestamp when data is available.
+  uint32_to_dec(buf, time_stamp, 8);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":", 0);
 
   if (error_message != NULL)
   {
