@@ -51,6 +51,11 @@ extern "C" {
 #endif
 
 
+#ifdef __cplusplus
+}
+#endif
+
+
 // Configure QWIIC I2C Bus:
 // ************************
 // By default use Wire
@@ -72,9 +77,5 @@ extern "C" {
 #define READ_BUFFER_SIZE 32
 #endif
 
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // __I2C_STICK_HAL_ARDUINO_H__
