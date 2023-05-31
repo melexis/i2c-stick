@@ -231,7 +231,6 @@ struct Mlx90632Device
   struct Mlx90632CalibData calib_data_;
   uint8_t slave_address_;
   uint8_t meas_select_;
-  uint8_t meas_count_;
 };
 
 

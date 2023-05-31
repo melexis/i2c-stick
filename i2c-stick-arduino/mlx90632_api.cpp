@@ -255,7 +255,6 @@ _mlx90632_initialize(struct Mlx90632Device *mlx, uint8_t i2c_slave_address)
   mlx->slave_address_ = i2c_slave_address;
   memset(&mlx->adc_data_, 0, sizeof(mlx->adc_data_));
   mlx->meas_select_ = 0;
-  mlx->meas_count_ = 3;
 
   if (_mlx90632_soft_reset(mlx) < 0)
   {
