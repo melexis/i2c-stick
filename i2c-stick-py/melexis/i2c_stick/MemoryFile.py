@@ -16,8 +16,24 @@ class MemoryFile(bincopy.BinFile):
         self.bytes_per_address = bytes_per_address
 
 
-    @staticmethod
-    def read_evb90614_32_40_41_bin_file(evb_bin_file, at_address):
+    def read_evb90614_32_40_41_txt_file(self, txt_file, at_address):
+        # EVB90614, EVB90632, EVB90640-41 BIN file format is little-endian, while bin_copy; the hex file package expects big-endian!
+        # so here we do the trick with unpack/pack!
+        self.bytes_per_address = 2 # force 2 bytes per address for MLX90632!
+        with open(txt_file, mode='r') as file:
+            fileContent = file.read()
+
+        fc = fileContent.split("\n")
+        fc.remove("")
+        data = [int(x) for x in fc]
+
+        bin_data = struct.pack(fmt_out, *data)
+
+        self.add_binary(bin_data, address=at_address*self.bytes_per_address, overwrite=True)
+        return txt_file
+
+
+    def read_evb90614_32_40_41_bin_file(self, evb_bin_file, at_address):
         # EVB90614, EVB90632, EVB90640-41 BIN file format is little-endian, while bin_copy; the hex file package expects big-endian!
         # so here we do the trick with unpack/pack!
         self.bytes_per_address = 2 # force 2 bytes per address for MLX90632!
@@ -29,9 +45,8 @@ class MemoryFile(bincopy.BinFile):
         data = list(struct.unpack(fmt_in, fileContent))
         bin_data = struct.pack(fmt_out, *data)
 
-        bin_file = MemoryFile()
-        bin_file.add_binary(bin_data, address=at_address*self.bytes_per_address, overwrite=True)
-        return bin_file
+        self.add_binary(bin_data, address=at_address*self.bytes_per_address, overwrite=True)
+        return evb_bin_file
 
 
     def add_32(self, address, int_data):
@@ -95,7 +110,7 @@ class MemoryFile(bincopy.BinFile):
         if not evb_bin_file_name.endswith('.bin'):
             evb_bin_file_name += '.bin'
 
-        bin_data_in = self[address*self.bytes_per_address:(address+count)*self.bytes_per_address].as_binary()
+        bin_data_in = self[address*self.bytes_per_address:(address+count)*self.bytes_per_address]
         if len(bin_data_in) < (count*self.bytes_per_address):
             bin_data_in.append(bytearray([255])*((count*self.bytes_per_address)-len(bin_data_in)))
         fmt_in = ">{:d}H".format (int(len(bin_data_in)/2))
@@ -108,6 +123,21 @@ class MemoryFile(bincopy.BinFile):
             out_file.write(bin_data)
 
         return evb_bin_file_name
+
+
+    def write_evb90614_32_40_41_txt_file(self, address, count, txt_file_name = "memory.txt"):
+        if txt_file_name is None:
+            return None
+
+        if not txt_file_name.endswith('.txt'):
+            txt_file_name += '.txt'
+
+        data = self[address*self.bytes_per_address:(address+count)*self.bytes_per_address]
+
+        with open(txt_file_name, "w") as out_file:
+            out_file.write("\n".join(data))
+
+        return txt_file_name
 
 
     def write_hex_file(self, hex_file_name = "memory_file.hex"):
@@ -126,8 +156,8 @@ class MemoryFile(bincopy.BinFile):
     def get_address_data_pairs(self):
         pairs = []
         for seg in self.segments:
-            for addr in range(0, int((seg.maximum_address-seg.minimum_address) / seg._word_size_bytes), self.bytes_per_address):
-                addr += int(seg.minimum_address / seg._word_size_bytes)
+            for addr in range(0, int((seg.maximum_address-seg.minimum_address) / seg.word_size_bytes), self.bytes_per_address):
+                addr += int(seg.minimum_address / seg.word_size_bytes)
                 data = 0
                 for i in range(self.bytes_per_address):
                     data <<= 8
