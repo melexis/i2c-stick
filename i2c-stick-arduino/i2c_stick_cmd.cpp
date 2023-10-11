@@ -471,6 +471,11 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
       g_sa_drv_register[spot].nd_ = 0;
     }
 
+    // SCL low for >1.44ms ==> MLX90614 in PWM or thermal relay requires this to enter communication mode
+    hal_write_pin(17u, 0);
+    hal_delay(2);
+    hal_write_pin(17u, 1);
+
     for (uint8_t sa = 1; sa<128; sa++)
     {
       g_sa_list[sa].found_ = 0;

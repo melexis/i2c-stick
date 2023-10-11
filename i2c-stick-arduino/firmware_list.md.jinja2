@@ -1,0 +1,3 @@
+{%- for board in boards %}
+- {{board.nick}}: [{{board.name}} UF2-file](firmware/{{board.fqbn|replace(':', '.')}}/melexis-i2c-stick-arduino.ino.uf2) -- [board url]({{board.url}})
+{% endfor %}

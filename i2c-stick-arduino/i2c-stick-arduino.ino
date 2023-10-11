@@ -130,11 +130,33 @@ hal_get_board_info()
   return BOARD_INFO;
 }
 
+void
+hal_write_pin(uint8_t pin, uint8_t state)
+{
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, state ? 1 : 0);
+}
+
+
+uint8_t
+hal_read_pin(uint8_t pin)
+{
+  pinMode(pin, INPUT);
+  return digitalRead(pin);
+}
+
 
 uint64_t
 hal_get_millis()
 {
   return millis();
+}
+
+
+void
+hal_delay(uint32_t ms)
+{
+  delay(ms);
 }
 
 

@@ -29,7 +29,6 @@ void cmd_90614_is(uint8_t sa, uint8_t *is_ok, char const **error_message);
 
 void cmd_90614_tear_down(uint8_t sa);
 
-
 #ifdef  __cplusplus
 }
 #endif

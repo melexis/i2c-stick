@@ -1,0 +1,36 @@
+#ifndef _{{driver.name}}_CMD_
+#define _{{driver.name}}_CMD_
+
+#include <stdint.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+struct {{driver.name}}_t
+{
+  uint8_t slave_address_;
+  // local caching of sensor values whenever needed;
+  // stored along with <SA>, such that multiple sensors can be supported.
+};
+
+
+int16_t cmd_{{driver.function_id}}_register_driver();
+
+void cmd_{{driver.function_id}}_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_message);
+void cmd_{{driver.function_id}}_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_message);
+void cmd_{{driver.function_id}}_nd(uint8_t sa, uint8_t *nd, char const **error_message);
+void cmd_{{driver.function_id}}_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **error_message);
+void cmd_{{driver.function_id}}_cs(uint8_t sa, uint8_t channel_mask, const char *input);
+void cmd_{{driver.function_id}}_cs_write(uint8_t sa, uint8_t channel_mask, const char *input);
+void cmd_{{driver.function_id}}_mr(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
+void cmd_{{driver.function_id}}_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
+void cmd_{{driver.function_id}}_is(uint8_t sa, uint8_t *is_ok, char const **error_message);
+
+void cmd_{{driver.function_id}}_tear_down(uint8_t sa);
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif
