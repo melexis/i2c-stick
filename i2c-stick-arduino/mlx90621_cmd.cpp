@@ -4,8 +4,12 @@
 #include "i2c_stick_dispatcher.h"
 #include "i2c_stick_hal.h"
 
+#include "mlx90621_api.h"
+
 #include <string.h>
 #include <stdlib.h>
+
+#include <Arduino.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -421,11 +425,53 @@ cmd_90621_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
 }
 
 
+
 void
 cmd_90621_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
 { // function to call prior any init, only to check is the connected slave IS a MLX90614.
   uint16_t value;
   *is_ok = 1; // be optimistic!
+
+  Serial.printf("\ntesting!");
+
+
+  float emissivity = 0.95;
+  float tr;
+  static uint8_t eeMLX90621[256];
+  static uint16_t mlx90621Frame[66];
+  paramsMLX90621 mlx90621;
+  static float mlx90621To[64];
+  int status;
+  status = MLX90621_DumpEE (eeMLX90621);
+  MLX90621_Configure(eeMLX90621);
+  MLX90621_SetRefreshRate (0x09); // 32Hz
+
+  status = MLX90621_ExtractParameters(eeMLX90621, &mlx90621);
+
+  int rr = MLX90621_GetRefreshRate();
+  Serial.printf("RefreshRate: %d\n", rr);
+
+  memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
+  status = MLX90621_GetFrameData (mlx90621Frame);
+
+
+
+  float Ta = MLX90621_GetTa (mlx90621Frame, &mlx90621);
+  Serial.printf("Ta: %f C\n", Ta);
+
+
+  tr = 23.15;
+  MLX90621_CalculateTo(mlx90621Frame, &mlx90621, emissivity, tr, mlx90621To);
+  for (int i=0; i<64; i++)
+  {
+    Serial.printf("pixel[%2d]: %.2f\n", i, mlx90621To[i]);
+  }
+
+
+
+
+
+  Serial.printf("\n");
 
   // todo:
   //
@@ -440,15 +486,15 @@ cmd_90621_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
 
 //  MLX90614_SMBusInit();
 //  if (MLX90614_SMBusRead(sa, 0x2E, &value) < 0)
-  {
-    *error_message = MLX90621_ERROR_COMMUNICATION;
-    *is_ok = 0;
-    return;
-  }
-  if (value & 0x007F != sa)
-  {
-    *is_ok = 0;
-  }
+//  {
+//    *error_message = MLX90621_ERROR_COMMUNICATION;
+//    *is_ok = 0;
+//    return;
+//  }
+//  if (value & 0x007F != sa)
+//  {
+//    *is_ok = 0;
+//  }
 }
 
 
