@@ -50,26 +50,25 @@ int MLX90621_I2CReadEEPROM(uint8_t slaveAddr, uint8_t startAddress, uint16_t nMe
 #endif
       if (ack != 0x00)
       {
-          return -1;
+        return -1;
       }
       n = cnt > READ_BUFFER_SIZE ? READ_BUFFER_SIZE : cnt;
       startAddress += n;
       WIRE.requestFrom((int)slaveAddr, (int)n);
-      for(uint16_t i; i<n; i++)
+      for(uint16_t i=0; i<n; i++)
       {
         uint8_t val = WIRE.read();
         *p++ = val;
       }
-    }
-
-    ack = WIRE.endTransmission();     // stop transmitting
+      ack = WIRE.endTransmission();     // stop transmitting
 #ifdef ARDUINO_ARCH_RP2040  
-    if (ack == 4) ack = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
+      if (ack == 4) ack = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
 #endif
 
-    if (ack != 0x00)
-    {
+      if (ack != 0x00)
+      {
         return -1;
+      }
     }
 
     return 0;
@@ -90,6 +89,7 @@ int MLX90621_I2CRead(uint8_t slaveAddr,uint8_t command, uint8_t startAddress, ui
 
     for (cnt = 2*nMemAddressRead; cnt > 0; cnt -= READ_BUFFER_SIZE)
     {
+      n = cnt > READ_BUFFER_SIZE ? READ_BUFFER_SIZE : cnt;
       WIRE.beginTransmission(slaveAddr);
       WIRE.write(command);
       WIRE.write(startAddress);
@@ -103,33 +103,32 @@ int MLX90621_I2CRead(uint8_t slaveAddr,uint8_t command, uint8_t startAddress, ui
       {
           return -1;
       }
-      n = cnt > READ_BUFFER_SIZE ? READ_BUFFER_SIZE : cnt;
-      startAddress += (n/2);
       WIRE.requestFrom((int)slaveAddr, (int)n);
+      startAddress += (n/2);
       for(; n>0; n-=2)
       {
-        uint16_t val = WIRE.read();
-        val <<= 8;
-        val |= WIRE.read();
-        *p++ = val;
+        uint16_t low_byte = WIRE.read();
+        uint16_t high_byte = WIRE.read();
+        *p = (low_byte | (high_byte << 8));
+        *p++;
+      }
+      ack = WIRE.endTransmission();     // stop transmitting
+#ifdef ARDUINO_ARCH_RP2040  
+      if (ack == 4) ack = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
+#endif
+
+      if (ack != 0x00)
+      {
+        return -1;
       }
     }
 
-    ack = WIRE.endTransmission();     // stop transmitting
-#ifdef ARDUINO_ARCH_RP2040  
-    if (ack == 4) ack = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
-#endif
-
-    if (ack != 0x00)
-    {
-        return -1;
-    }
 
     return 0;
 } 
 
 
-    void MLX90621_I2CFreqSet(int freq)
+void MLX90621_I2CFreqSet(int freq)
 {
     WIRE.end();          // some MCU cannot change the clock while I2C is active.
     WIRE.setClock(freq); // RP2040 requires first to set the clock
@@ -177,4 +176,3 @@ int MLX90621_I2CWrite(uint8_t slaveAddr, uint8_t command, uint8_t checkValue, ui
     
     return 0;
 }
-
