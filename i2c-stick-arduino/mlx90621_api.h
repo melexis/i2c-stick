@@ -23,7 +23,7 @@ typedef struct
     {
         int16_t vTh25;
         float kT1;
-        float kT2;        
+        float kT2;
         float tgc;
         float KsTa;
         float ksTo;

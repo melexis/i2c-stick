@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 
+#include "mlx90621_api.h"
+
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -12,6 +15,12 @@ struct MLX90621_t
   uint8_t slave_address_;
   // local caching of sensor values whenever needed;
   // stored along with <SA>, such that multiple sensors can be supported.
+
+  float emissivity_;
+  float tr_;
+  paramsMLX90621 mlx90621_;
+  float to_[64];
+  float ta_;
 };
 
 

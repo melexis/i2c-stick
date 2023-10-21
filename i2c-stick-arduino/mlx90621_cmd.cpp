@@ -5,6 +5,7 @@
 #include "i2c_stick_hal.h"
 
 #include "mlx90621_api.h"
+#include "mlx90621_i2c_driver.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -109,6 +110,65 @@ cmd_90621_register_driver()
 }
 
 
+static int8_t 
+check_90621_calibration_ranges(paramsMLX90621 *mlx90621)
+{  
+  // those ranges are experimental; one might require to tweak those...
+
+  // Serial.printf("mlx90621->vTh25: %d\n", mlx90621->vTh25);
+  // Serial.printf("mlx90621->kT1: %f\n", mlx90621->kT1);
+  // Serial.printf("mlx90621->kT2: %f\n", mlx90621->kT2);
+  // Serial.printf("mlx90621->tgc: %f\n", mlx90621->tgc);
+  // Serial.printf("mlx90621->KsTa: %f\n", mlx90621->KsTa);
+  // Serial.printf("mlx90621->ksTo: %f\n", mlx90621->ksTo);
+  // for (int i=0; i<64; i++)
+  // {
+  //   Serial.printf("mlx90621->alpha[%d]: %fe-6\n", i, (mlx90621->alpha[i] * 1000000.0));
+  // }
+
+  if ((mlx90621->vTh25 < 20000) ||
+      (mlx90621->vTh25 > 30000))
+  {
+    return 1;    
+  }
+  if ((mlx90621->kT1 < 70.0) ||
+      (mlx90621->kT1 > 100.0))
+  {
+    return 1;
+  }
+  if ((mlx90621->kT2  < -0.1) ||
+      (mlx90621->kT2 > 0.1))
+  {
+    return 1;
+  }
+  if ((mlx90621->tgc < 0.25) ||
+      (mlx90621->tgc > 2.00))
+  {
+    return 1;
+  }
+  if ((mlx90621->KsTa < 0.0001) ||
+      (mlx90621->KsTa > 0.0100))
+  {
+    return 1;
+  }
+  if ((mlx90621->ksTo < -0.0100) ||
+      (mlx90621->ksTo > -0.0001))
+  {
+    return 1;
+  }
+
+  for (int i=0; i<64; i++)
+  {
+    if ((mlx90621->alpha[i] < 0.001E-6) ||
+        (mlx90621->alpha[i] > 2.0E-6))
+    {
+      return 1;
+    }
+  }  
+  return 0;
+}
+
+
 void
 cmd_90621_init(uint8_t sa)
 {
@@ -118,6 +178,18 @@ cmd_90621_init(uint8_t sa)
     return;
   }
   // init functions goes here
+  mlx->slave_address_ = sa;
+
+  mlx->emissivity_ = 0.95;
+  mlx->tr_ = 25.0;
+
+  uint8_t eeMLX90621[256];
+
+  MLX90621_I2CInit();
+  MLX90621_DumpEE (eeMLX90621);
+  MLX90621_Configure(eeMLX90621);
+  MLX90621_SetRefreshRate (0x09); // 32Hz
+  MLX90621_ExtractParameters(eeMLX90621, &mlx->mlx90621_);
 
   // turn off bit7, to indicate other routines this slave has been init
   mlx->slave_address_ &= 0x7F;
@@ -146,18 +218,26 @@ cmd_90621_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_
     cmd_90621_init(sa);
   }
 
-  if (*mv_count <= 2) // check Measurement Value buffer length
+  if (*mv_count <= 65) // check Measurement Value buffer length
   {
     *mv_count = 0;
     *error_message = MLX90621_ERROR_BUFFER_TOO_SMALL;
     return;
   }
-  *mv_count = 2;
+  *mv_count = 65;
 
-  // todo:
-  //
-  // get the measurement values from the sensor
-  //
+  uint16_t mlx90621Frame[66];
+  memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
+  MLX90621_GetFrameData (mlx90621Frame);
+
+  mlx->ta_ = MLX90621_GetTa (mlx90621Frame, &mlx->mlx90621_);
+  mv_list[0] = mlx->ta_;
+
+  MLX90621_CalculateTo(mlx90621Frame, &mlx->mlx90621_, mlx->emissivity_, mlx->tr_, mlx->to_);
+  for (int i=0; i<64; i++)
+  {
+    mv_list[i+1] = mlx->to_[i];
+  }
 }
 
 
@@ -176,18 +256,21 @@ cmd_90621_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **
     cmd_90621_init(sa);
   }
 
-  if (*raw_count < 3) // check Raw Value buffer length
+  if (*raw_count < 66) // check Raw Value buffer length
   {
     *raw_count = 0; // input buffer not long enough, report nothing.
     *error_message = MLX90621_ERROR_BUFFER_TOO_SMALL;
     return;
   }
-  *raw_count = 3;
+  *raw_count = 66;
 
-  // todo:
-  //
-  // get the raw values from the sensor
-  //
+  uint16_t mlx90621Frame[66];
+  memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
+  MLX90621_GetFrameData (mlx90621Frame);
+  for (uint16_t i=0; i<66; i++)
+  {
+    raw_list[i] = (uint16_t)mlx90621Frame[i];
+  }
 }
 
 
@@ -204,6 +287,8 @@ cmd_90621_nd(uint8_t sa, uint8_t *nd, char const **error_message)
   {
     cmd_90621_init(sa);
   }
+
+  *nd = 1; // not implemented, but there is 'always' new data...
 
   // todo:
   //
@@ -234,6 +319,11 @@ cmd_90621_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **err
     return;
   }
   *sn_count = 4;
+
+  sn_list[0] = 0;
+  sn_list[1] = 0;
+  sn_list[2] = 0;
+  sn_list[3] = 0;
 
   // todo:
   //
@@ -425,76 +515,37 @@ cmd_90621_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
 }
 
 
-
 void
 cmd_90621_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
 { // function to call prior any init, only to check is the connected slave IS a MLX90614.
   uint16_t value;
   *is_ok = 1; // be optimistic!
 
-  Serial.printf("\ntesting!");
-
-
-  float emissivity = 0.95;
-  float tr;
-  static uint8_t eeMLX90621[256];
-  static uint16_t mlx90621Frame[66];
+  uint8_t eeMLX90621[256];
   paramsMLX90621 mlx90621;
-  static float mlx90621To[64];
   int status;
+
+  MLX90621_I2CInit();
   status = MLX90621_DumpEE (eeMLX90621);
-  MLX90621_Configure(eeMLX90621);
-  MLX90621_SetRefreshRate (0x09); // 32Hz
-
-  status = MLX90621_ExtractParameters(eeMLX90621, &mlx90621);
-
-  int rr = MLX90621_GetRefreshRate();
-  Serial.printf("RefreshRate: %d\n", rr);
-
-  memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
-  status = MLX90621_GetFrameData (mlx90621Frame);
-
-
-
-  float Ta = MLX90621_GetTa (mlx90621Frame, &mlx90621);
-  Serial.printf("Ta: %f C\n", Ta);
-
-
-  tr = 23.15;
-  MLX90621_CalculateTo(mlx90621Frame, &mlx90621, emissivity, tr, mlx90621To);
-  for (int i=0; i<64; i++)
+  if (status != 0)
   {
-    Serial.printf("pixel[%2d]: %.2f\n", i, mlx90621To[i]);
+    *is_ok = 0;
+    return;
   }
 
+  status = MLX90621_ExtractParameters(eeMLX90621, &mlx90621);
+  if (status != 0)
+  {
+    *is_ok = 0;
+    return;
+  }
 
-
-
-
-  Serial.printf("\n");
-
-  // todo:
-  //
-  // find a way to verify the connected slave at <sa> slave address is actually a MLX90621!
-  // often times this can be done by reading some specific values from the ROM or EEPROM,
-  // and verify the values are as expected.
-  //
-
-  // remember there is no communication initiated yet...
-
-  // in this ecample below for MLX90614 we check if the EEPROM reads the slave address at address 0x2E...
-
-//  MLX90614_SMBusInit();
-//  if (MLX90614_SMBusRead(sa, 0x2E, &value) < 0)
-//  {
-//    *error_message = MLX90621_ERROR_COMMUNICATION;
-//    *is_ok = 0;
-//    return;
-//  }
-//  if (value & 0x007F != sa)
-//  {
-//    *is_ok = 0;
-//  }
+  status = check_90621_calibration_ranges(&mlx90621);
+  if (status != 0)
+  {
+    *is_ok = 0;
+    return;
+  }
 }
 
 
