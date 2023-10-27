@@ -1,6 +1,3 @@
-# todo:
-# [ ] create package / website within this dodo.py file.
-# [ ] align version number of firmware and the python package. (make them one and the same!)
 import sys
 import subprocess
 
@@ -33,6 +30,7 @@ from glob import glob
 from pathlib import Path
 import serial.tools.list_ports
 from doit.action import CmdAction
+from doit.tools import run_once
 import platform
 
 with open(CONTEXT_FILE) as f:
@@ -63,8 +61,17 @@ def remove(path):
             raise ValueError("path {} is not a file or dir.".format(p))
 
 
+def show_cmd(task):
+    msg = task.name
+    if task.verbosity >= 2:
+        for action in task.actions:
+            msg += "\n    - " + str(action)
+    return msg
+
+
 def task_cleaner():
     """ Clean the entire repository for a git commit & be ready to re-compile the entire project!"""
+
     def do_clean():
         patterns = ["build",
                     "package",
@@ -95,6 +102,7 @@ def task_cleaner():
     return {
         "actions": None,
         "clean": [do_clean],
+        'title': show_cmd,
     }
 
 
@@ -105,11 +113,13 @@ def task_pip():
             'name': rqt_file,
             'actions': ["pip install {} -r {}".format(PIP_USER, rqt_file)],
             'file_dep': [rqt_file],
+            'title': show_cmd,
         }
 
 
 def task_arduino_install_cli():
     """Arduino: Install the arduino-cli tool"""
+
     def do_install(task):
         if not Path("tools").is_dir():
             os.mkdir('tools')
@@ -126,7 +136,8 @@ def task_arduino_install_cli():
         if system == 'windows':
             zip_suffix = 'zip'
 
-        url = "https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_{}_{}.{}".format(os_dict[system], bits, zip_suffix)
+        url = "https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_{}_{}.{}".format(os_dict[system], bits,
+                                                                                            zip_suffix)
         print("downloading:", url)
         import io
         import zipfile
@@ -147,8 +158,9 @@ def task_arduino_install_cli():
         'basename': 'arduino-install-cli',
         'actions': [(do_install, )],
         'verbosity': 2,
-        'file_dep': ['requirements.txt'],
         'targets': [ARDUINO_CLI],
+        'uptodate': [run_once],
+        'title': show_cmd,
     }
 
 
@@ -172,40 +184,156 @@ def task_package():
         'clean': True,
         # 'file_dep': ['ktc_trial.yml', os.path.join("dist", 'ktc_trial.exe')],
         'task_dep': ['arduino-compile', 'generate:firmware_list.md'],
+        'title': show_cmd,
     }
 
 
-def task_arduino_update_boards():
+def task_arduino_update_index():
     """Arduino: get a fresh copy of the board index"""
     return {
-        'basename': 'arduino-update-boards',
+        'basename': 'arduino-update-index',
         'actions': ["{} {} core update-index".format(ARDUINO_CLI, arduino_add_url),
                     ],
-        'file_dep': [CONTEXT_FILE],
+        'uptodate': [run_once],
         'task_dep': ['arduino-install-cli'],
+        'title': show_cmd,
     }
 
 
-def task_arduino_install_board():
-    """Arduino: install the board tool-chain"""
-    for board in context['board_manager']['boards']:
+def task_arduino_install_core():
+    """Arduino: install the core tool-chain for a platform"""
+    cores = [board['core'] for board in context['boards']]
+    for core in cores:
         yield {
-            'basename': 'arduino-install-board',
-            'name': board,
-            'actions': ["{} {} core install {}".format(ARDUINO_CLI, arduino_add_url, board),
+            'basename': 'arduino-install-core',
+            'name': core,
+            'actions': ["{} {} core install {}".format(ARDUINO_CLI, arduino_add_url, core),
                         ],
-            'task_dep': ['arduino-install-cli', 'arduino-update-boards'],
-            'file_dep': [CONTEXT_FILE],
+            'task_dep': ['arduino-install-cli', 'arduino-update-index'],
+            'uptodate': [run_once],
+            'title': show_cmd,
+        }
+
+
+def task_arduino_lib_update_index():
+    """Arduino: get a fresh copy of the library index"""
+    return {
+        'basename': 'arduino-lib-update-index',
+        'actions': ["{} {} lib update-index".format(ARDUINO_CLI, arduino_add_url),
+                    ],
+        'uptodate': [run_once],
+        'task_dep': ['arduino-install-cli'],
+        'title': show_cmd,
         }
 
 
 def task_arduino_install_libs():
     """Arduino: install the specific libraries"""
-    return {
+    yield {
         'basename': 'arduino-install-libs',
-        "actions": None,
-        'task_dep': ['arduino-install-cli'],
+        'name': None,
     }
+    libs = []
+    if 'libraries' in context:
+        libs = context['libraries']
+    for lib in libs:
+        lib_cli = ""
+        lib_name = ""
+        if 'name' in lib:
+            lib_cli = lib['name']
+            lib_name = lib['name']
+            if 'version' in lib:
+                lib_cli += "@" + str(lib['version'])
+        elif 'git' in lib:
+            lib_cli = '--git-url ' + lib['git']
+            lib_name = lib['git'].split('/')[-1]
+            lib_name = lib_name.replace(".git", "")
+            os.environ['ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL'] = 'true'
+            if 'version' in lib:
+                lib_cli += "#" + str(lib['version'])
+        elif 'zip' in lib:
+            lib_cli = '--zip-path ' + lib['zip']
+            lib_name = Path(lib['zip']).stem
+            os.environ['ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL'] = 'true'
+
+        yield {
+            'basename': 'arduino-install-libs',
+            'name': lib_name,
+            'actions': ["{} lib install {}".format(ARDUINO_CLI, lib_cli)],
+            'uptodate': [run_once],
+            'task_dep': ['arduino-install-cli',
+                         'arduino-lib-update-index'],
+            'title': show_cmd,
+        }
+
+
+def task_arduino_lib_upgrade():
+    """Arduino: upgrade the libraries to its latest revision"""
+    yield {
+        'basename': 'arduino-upgrade-libs',
+        'name': None,
+    }
+    libs = []
+    if 'libraries' in context:
+        libs = context['libraries']
+    for lib in libs:
+        lib_cli = ""
+        lib_name = ""
+        cli_action = 'install'
+        if 'name' in lib:
+            lib_cli = lib['name']
+            lib_name = lib['name']
+            cli_action = 'upgrade'
+        elif 'git' in lib:
+            lib_cli = '--git-url ' + lib['git']
+            lib_name = lib['git'].split('/')[-1]
+            lib_name = lib_name.replace(".git", "")
+            os.environ['ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL'] = 'true'
+        elif 'zip' in lib:
+            lib_cli = '--zip-path ' + lib['zip']
+            lib_name = Path(lib['zip']).stem
+            os.environ['ARDUINO_LIBRARY_ENABLE_UNSAFE_INSTALL'] = 'true'
+
+        yield {
+            'basename': 'arduino-upgrade-libs',
+            'name': lib_name,
+            'actions': ["{} lib {} {}".format(ARDUINO_CLI, cli_action, lib_cli)],
+            'uptodate': [False],
+            'verbosity': 2,
+            'task_dep': ['arduino-install-cli',
+                         'arduino-lib-update-index'],
+            'title': show_cmd,
+        }
+
+
+def task_arduino_libs():
+    """Arduino: list installed libraries"""
+    return {
+        'basename': 'arduino-libs',
+        'actions': ["{} {} lib list".format(ARDUINO_CLI, arduino_add_url),
+                    ],
+        'uptodate': [False],
+        'verbosity': 2,
+        'task_dep': ['arduino-install-cli'],
+        'title': show_cmd,
+    }
+
+
+def task_arduino_board_details():
+    """Arduino: get board details, a list of parameters one normally sets via the menu interface."""
+    for board in context['boards']:
+        fqbn = board['fqbn']
+        yield {
+            'basename': 'arduino-board-details',
+            'name': board['nick'],
+            'verbosity': 2,
+            'actions': ["{} board details --fqbn {}".format(ARDUINO_CLI, fqbn)],
+            'task_dep': ['arduino-install-cli',
+                         'arduino-install-core:'+board['core'],
+                        ],
+            'uptodate': [False],  # force to run the task always
+            'title': show_cmd,
+        }
 
 
 def task_arduino_compile():
@@ -213,57 +341,111 @@ def task_arduino_compile():
     working_directory = Path('.')
     headers = list(working_directory.glob('*.h'))
     cpp_files = list(working_directory.glob('*.cpp'))
+
+    # dependency manager is defined for all code inside the generator:
+    dep_manager = doit.Globals.dep_manager
+
+    def store(fqbn_store, extra_flags_store):
+        return dict(fqbn=fqbn_store, extra_flags=extra_flags_store)
+
     for board in context['boards']:
+        fqbn = board['fqbn']
+        if 'parameters' in board:
+            parameters = ",".join("{}={}".format(k, v) for k, v in board['parameters'].items())
+            if parameters != "":
+                fqbn += ":" + parameters
+        extra_flags = ""
+        if 'extra_defines' in board:
+            for k, v in board['extra_defines'].items():
+                if type(v) is str:
+                    v = '"' + v + '"'
+                flag = "compiler.cpp.extra_flags=\"-D{}={}\"".format(k, v)
+                flag = flag.replace('"', '\\"')
+                extra_flags += '--build-property "{}" '.format(flag)
+        result = dep_manager.get_result("{}:{}".format("arduino-compile", board['nick']))
+        clean_flag = ""
+        if type(result) is dict:
+            if result['fqbn'] != fqbn:
+                clean_flag = " --clean"
+            if result['extra_flags'] != extra_flags:
+                clean_flag = " --clean"
+        else:
+            clean_flag = " --clean"
+
         yield {
             'basename': 'arduino-compile',
             'name': board['nick'],
-            'actions': ["{} compile --fqbn {} i2c-stick-arduino.ino -e --clean".format(ARDUINO_CLI, board['fqbn']),
+            'actions': ["{} compile --fqbn {} {} {}.ino -e {}".format(
+                    ARDUINO_CLI, fqbn, extra_flags, context['ino'], clean_flag),
+                        (store, [fqbn, extra_flags]),
                         ],
             'task_dep': ['arduino-install-cli',
-                         'arduino-install-board:'+board['platform'],
+                         'arduino-install-core:'+board['core'],
                          'arduino-install-libs',
                          'generate:i2c_stick_dispatcher.h',
                          'generate:i2c_stick_dispatcher.cpp',
                         ],
+            'title': show_cmd,
             'file_dep': [CONTEXT_FILE,
-                         'i2c-stick-arduino.ino',
+                         '{}.ino'.format(context['ino']),
                          'i2c_stick_dispatcher.h',
-                         'i2c_stick_dispatcher.cpp'] + headers + cpp_files,
-            'targets': ['build/{}/i2c-stick-arduino.ino.uf2'.format(board['fqbn'].replace(":", "."))],
+                         'i2c_stick_dispatcher.cpp',
+                         ] + headers + cpp_files,
+            'targets': ['build/{}/{}.ino.{}'.format(
+                            board['fqbn'].replace(":", "."), context['ino'], board['bin_extension'])],
         }
 
 
 def task_arduino_upload():
     """Arduino: Upload to the target board"""
+
     def do_upload(board_cfg, port):
         if port == 'auto':
-            filtered_ports = []
-            pid = None
-            vid = None
-            if 'USB_VID' in board_cfg:
-                vid = board_cfg['USB_VID']
-            if 'USB_PID' in board_cfg:
-                pid = board_cfg['USB_PID']
-            for p in serial.tools.list_ports.comports(include_links=False):
-                if vid is None:
+            method = 'vid_pid'
+            if 'port_discovery_method' in board_cfg:
+                method = board_cfg['port_discovery_method']
+
+            if method == 'vid_pid': # special case for teensy
+                filtered_ports = []
+                pid = None
+                vid = None
+                if 'USB_VID' in board_cfg:
+                    vid = board_cfg['USB_VID']
+                if 'USB_PID' in board_cfg:
+                    pid = board_cfg['USB_PID']
+                for p in serial.tools.list_ports.comports(include_links=False):
+                    if vid is None:
+                        if pid is None:
+                            filtered_ports.append(p)
+                            continue
+
+                    if vid is None:
+                        if p.pid == pid:
+                            filtered_ports.append(p)
+                            continue
                     if pid is None:
-                        filtered_ports.append(p)
-                        continue
+                        if p.vid == vid:
+                            filtered_ports.append(p)
+                            continue
 
-                if vid is None:
-                    if p.pid == pid:
-                        filtered_ports.append(p)
-                        continue
-                if pid is None:
                     if p.vid == vid:
-                        filtered_ports.append(p)
-                        continue
+                        if p.pid == pid:
+                            filtered_ports.append(p)
+                port = filtered_ports[0].name
 
-                if p.vid == vid:
-                    if p.pid == pid:
-                        filtered_ports.append(p)
-            port = filtered_ports[0].name
-        return "{} upload --fqbn {} i2c-stick-arduino.ino --port {}".format(ARDUINO_CLI, board_cfg['fqbn'], port)
+            if method == 'arduino-cli':
+                output = subprocess.check_output("{} board list --fqbn {}".format(ARDUINO_CLI, board_cfg['fqbn']),
+                                                 text=True)
+                lines = output.split("\n")
+                if len(lines) >= 2:
+                    port = lines[1].split(' ')[0]  # we only use one; the first one; to upload...
+
+        fqbn = board_cfg['fqbn']
+        if 'parameters' in board_cfg:
+            parameters = ",".join("{}={}".format(k, v) for k, v in board_cfg['parameters'].items())
+            if parameters != "":
+                fqbn += ":" + parameters
+        return "{} upload --fqbn {} {}.ino --port {}".format(ARDUINO_CLI, fqbn, context['ino'], port)
 
     for board in context['boards']:
         yield {
@@ -277,11 +459,10 @@ def task_arduino_upload():
                  'default': 'auto',
                  },
             ],
-            'actions': [CmdAction((do_upload, [board], {})),
-                        ],
+            'actions': [CmdAction((do_upload, [board], {}))],
             'task_dep': ['arduino-install-cli',
-                         'arduino-compile',
-                        ],
+                         'arduino-compile:{}'.format(board['nick']),
+                         ],
             'file_dep': [CONTEXT_FILE],
             'uptodate': [False],  # force to run the task always
             'verbosity': 2,
@@ -290,6 +471,7 @@ def task_arduino_upload():
 
 def task_generate():
     """Generate file using context.yaml and jinja2 template files"""
+
     def do_generate(template, output):
         this_dir = os.path.dirname(os.path.abspath(__file__))
         yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
@@ -300,10 +482,10 @@ def task_generate():
             autoescape=jinja2.select_autoescape()
         )
 
-        t = env.get_template(template)
+        jinja_t = env.get_template(template)
 
         with open(output, 'w') as output_f:
-            output_f.write(t.render(context))
+            output_f.write(jinja_t.render(context))
 
     working_directory = Path('.')
     for jinja2_file in working_directory.glob('*.jinja2'):
@@ -316,6 +498,7 @@ def task_generate():
             'file_dep': [jinja2_file.name],
             'task_dep': ['pip:requirements.txt'],
             'targets': [output_file.name],
+            'title': show_cmd,
         }
 
 
@@ -426,4 +609,5 @@ def task_add_driver():
 
 if __name__ == '__main__':
     import doit
+
     doit.run(globals())
