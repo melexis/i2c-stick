@@ -212,6 +212,11 @@ void MLX90621_CalculateTo(uint16_t *frameData, const paramsMLX90621 *params, flo
     for( int pixelNumber = 0; pixelNumber < 64; pixelNumber++)
     {    
         irData = frameData[pixelNumber];
+        if (irData == 0x7FFF)
+        {
+            result[pixelNumber] = -999; // disabled value!
+            continue;
+        }
         if(irData > 32767)
         {
             irData = irData - 65536;

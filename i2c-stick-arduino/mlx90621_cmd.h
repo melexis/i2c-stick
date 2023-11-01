@@ -10,6 +10,8 @@
 extern "C" {
 #endif
 
+#define MLX90621_LSB_C 32
+
 struct MLX90621_t
 {
   uint8_t slave_address_;
@@ -21,6 +23,11 @@ struct MLX90621_t
   paramsMLX90621 mlx90621_;
   float to_[64];
   float ta_;
+
+  uint8_t rows_;
+  uint8_t columns_;
+  uint8_t start_row_;
+  uint8_t start_column_;
 };
 
 

@@ -169,6 +169,72 @@ check_90621_calibration_ranges(paramsMLX90621 *mlx90621)
 }
 
 
+// function to get the raw data, the frame_data is kept in the full pixel size with original pixel positions.
+// the frame_data buffer is initialized with 0x7FFF to indicate the pixel is 'disabled'
+static int 
+mlx90621_get_frame_data_special(uint16_t *frame_data, uint8_t start_row, uint8_t start_column, uint8_t rows, uint8_t columns)
+{
+  int error = 1;
+
+  // check input parameters.
+  if (rows == 0) return 1;
+  if (columns == 0) return 1;
+  if (rows > 4) return 1;
+  if (columns > 16) return 1;
+  if (start_row > 4) start_row = 4;
+  if (start_column > 16) start_column = 16;
+  if (start_row == 0) start_row = 1;
+  if (start_column == 0) start_column = 1;
+
+  if (rows >= 3)
+  { // read in column mode, we will likely read too much data, but we save the overhead communication.
+    uint8_t start_address = ((start_column-1) * 4);
+    uint8_t count = 4 * columns;
+    error = MLX90621_I2CRead(0x60, 0x02, start_address, 1, count, frame_data+start_address);
+  } else
+  { // read in row mode
+    for (uint8_t row = start_row-1; row<rows; row++)
+    {
+      uint8_t start_address = (row * 4);
+      uint8_t count = columns;
+      error = MLX90621_I2CRead(0x60, 0x02, start_address, 4, count, frame_data+start_address);
+    }
+  }
+
+
+  for (uint8_t i=0; i<64; i++)
+  {
+    uint8_t row = (i % 4) + 1;
+    uint8_t col = (i / 4) + 1;
+    if ((start_row <= row) && (row < (start_row + rows)))
+    {
+      if ((start_column <= col) && (col < (start_column + columns)))
+      { // this pixel is enabled => skip to set the disable value!
+        continue;
+      }
+    }
+    frame_data[i] = 0x7FFF;
+  }
+
+
+  // Serial.printf("\nraw data:\n\n");
+  // for (uint8_t row=0; row<4; row++)
+  // {
+  //   for (uint8_t col=0; col<16; col++)
+  //   {
+  //     uint8_t i = col * 4 + row;
+  //     Serial.printf("%04X  ", frame_data[i]);
+  //   }
+  //   Serial.printf("\n");  
+  // }
+
+
+  // finally read PTAT & compensation pixel
+  error = MLX90621_I2CRead(0x60, 0x02, 0x40, 1, 2, frame_data+0x40);
+  return error;
+}
+
+
 void
 cmd_90621_init(uint8_t sa)
 {
@@ -182,6 +248,10 @@ cmd_90621_init(uint8_t sa)
 
   mlx->emissivity_ = 0.95;
   mlx->tr_ = 25.0;
+  mlx->rows_ = 4;
+  mlx->columns_ = 16;
+  mlx->start_row_ = 1;
+  mlx->start_column_ = 1;
 
   uint8_t eeMLX90621[256];
 
@@ -228,16 +298,30 @@ cmd_90621_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_
 
   uint16_t mlx90621Frame[66];
   memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
-  MLX90621_GetFrameData (mlx90621Frame);
+  // MLX90621_GetFrameData (mlx90621Frame);
+  mlx90621_get_frame_data_special(mlx90621Frame, mlx->start_row_, mlx->start_column_, mlx->rows_, mlx->columns_);
 
   mlx->ta_ = MLX90621_GetTa (mlx90621Frame, &mlx->mlx90621_);
   mv_list[0] = mlx->ta_;
 
   MLX90621_CalculateTo(mlx90621Frame, &mlx->mlx90621_, mlx->emissivity_, mlx->tr_, mlx->to_);
-  for (int i=0; i<64; i++)
+  uint16_t result_counter = 0;
+  float *p = &mv_list[1];
+  for (uint16_t i=0; i<64; i++)
   {
-    mv_list[i+1] = mlx->to_[i];
+    uint8_t row = (i % 4) + 1;
+    uint8_t col = (i / 4) + 1;
+    if ((mlx->start_row_ <= row) && (row < (mlx->start_row_ + mlx->rows_)))
+    {
+      if ((mlx->start_column_ <= col) && (col < (mlx->start_column_ + mlx->columns_)))
+      { // this pixel is enabled => add to result list!
+        *p++ = mlx->to_[i];
+        result_counter++;
+        continue;
+      }
+    }
   }
+  *mv_count = (result_counter + 1);
 }
 
 
@@ -266,11 +350,33 @@ cmd_90621_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **
 
   uint16_t mlx90621Frame[66];
   memset(&mlx90621Frame, 0, sizeof(mlx90621Frame));
-  MLX90621_GetFrameData (mlx90621Frame);
+
+  mlx90621_get_frame_data_special(mlx90621Frame, mlx->start_row_, mlx->start_column_, mlx->rows_, mlx->columns_);
+  // MLX90621_GetFrameData (mlx90621Frame);
+
+  uint16_t result_counter = 0; 
+  uint16_t *p = raw_list;
   for (uint16_t i=0; i<66; i++)
   {
-    raw_list[i] = (uint16_t)mlx90621Frame[i];
+    if (i>=64) // ptat & compensation pix
+    {
+      *p++ = (uint16_t)mlx90621Frame[i];
+      result_counter++;
+      continue;
+    }
+    uint8_t row = (i % 4) + 1;
+    uint8_t col = (i / 4) + 1;
+    if ((mlx->start_row_ <= row) && (row < (mlx->start_row_ + mlx->rows_)))
+    {
+      if ((mlx->start_column_ <= col) && (col < (mlx->start_column_ + mlx->columns_)))
+      { // this pixel is enabled => add to result list!
+        *p++ = (uint16_t)mlx90621Frame[i];
+        result_counter++;
+        continue;
+      }
+    }
   }
+  *raw_count = result_counter;
 }
 
 
@@ -345,10 +451,11 @@ cmd_90621_cs(uint8_t sa, uint8_t channel_mask, const char *input)
     cmd_90621_init(sa);
   }
 
-  // todo:
   //
   // read the CS(Configuration of the Slave) from the sensor.
   //
+  uint8_t rr = MLX90621_GetRefreshRate();
+  uint8_t res = MLX90621_GetCurResolution();
 
   char buf[16]; memset(buf, 0, sizeof(buf));
   send_answer_chunk(channel_mask, "cs:", 0);
@@ -359,6 +466,48 @@ cmd_90621_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   send_answer_chunk(channel_mask, buf, 1);
 
 
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":RR=", 0);
+  itoa(rr, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":RES=", 0);
+  itoa(res, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":ROWS=", 0);
+  itoa(mlx->rows_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":COLUMNS=", 0);
+  itoa(mlx->columns_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":START_ROW=", 0);
+  itoa(mlx->start_row_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":START_COLUMN=", 0);
+  itoa(mlx->start_column_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
   // todo:
   //
   // Send the answer back in the format
@@ -366,25 +515,34 @@ cmd_90621_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   //
 
 
-  // todo:
+  // todo: 
   //
   // Send the configuration of the MV header, unit and resolution back to the terminal(not to sensor!)
   //
 
-  // send_answer_chunk(channel_mask, "cs:", 0);
-  // uint8_to_hex(buf, sa);
-  // send_answer_chunk(channel_mask, buf, 0);
-  // send_answer_chunk(channel_mask, ":RO:MV_HEADER=TA,TO", 1);
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":RO:MV_HEADER=TA,TO_[", 0);
+  itoa(mlx->rows_ * mlx->columns_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, "]", 1);
 
-  // send_answer_chunk(channel_mask, "cs:", 0);
-  // uint8_to_hex(buf, sa);
-  // send_answer_chunk(channel_mask, buf, 0);
-  // send_answer_chunk(channel_mask, ":RO:MV_UNIT=DegC,DegC", 1);
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":RO:MV_UNIT=DegC,DegC[", 0);
+  itoa(mlx->rows_ * mlx->columns_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, "]", 1);
 
-  // send_answer_chunk(channel_mask, "cs:", 0);
-  // uint8_to_hex(buf, sa);
-  // send_answer_chunk(channel_mask, buf, 0);
-  // send_answer_chunk(channel_mask, ":RO:MV_RES=" xstr(MLX90614_LSB_C) "," xstr(MLX90614_LSB_C), 1);
+  send_answer_chunk(channel_mask, "cs:", 0);
+  uint8_to_hex(buf, sa);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":RO:MV_RES=" xstr(MLX90621_LSB_C) "," xstr(MLX90621_LSB_C) "[", 0);
+  itoa(mlx->rows_ * mlx->columns_, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, "]", 1);
 }
 
 
@@ -402,16 +560,169 @@ cmd_90621_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
     cmd_90621_init(sa);
   }
 
-
-  //
-  // todo:
   //
   // write the configuration of the slave to the sensor and report to the channel the status.
   //
-  // Please get inspired from other drivers like MLX90614.
-  //
-  // Also if SA can be re-programmed, please add the correct sequence here, see also MLX90614 or MLX90632 for an extensive example.
-  //
+
+  const char *var_name = "EM=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    float em = atof(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((em > 0.1) && (em <= 1.0))
+    {
+      mlx->emissivity_ = em;
+      send_answer_chunk(channel_mask, ":EM=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":EM=FAIL; outbound", 1);
+    }
+    return;
+  }
+  var_name = "TR=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    float tr = atof(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((tr >= -60) && (tr <= 100))
+    {
+      mlx->tr_ = tr;
+      send_answer_chunk(channel_mask, ":TR=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":TR=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "RR=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t rr = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((rr >= 0) && (rr <= 15))
+    {
+      int ret = MLX90621_SetRefreshRate(rr);
+      if (ret == 0)
+      {
+        send_answer_chunk(channel_mask, ":RR=OK [mlx-register]", 1);
+      } else
+      {
+        send_answer_chunk(channel_mask, ":RR=FAIL; communication fail", 1);
+      }
+    } else
+    {
+      send_answer_chunk(channel_mask, ":RR=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "RES=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t res = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((res >= 0) && (res <= 3))
+    {
+      int ret = MLX90621_SetResolution(res);
+      if (ret == 0)
+      {
+        send_answer_chunk(channel_mask, ":RES=OK [mlx-register]", 1);
+      } else
+      {
+        send_answer_chunk(channel_mask, ":RES=FAIL; communication fail", 1);
+      }
+    } else
+    {
+      send_answer_chunk(channel_mask, ":RES=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "ROWS=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t rows = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((rows >= 1) && (rows <= 4))
+    {
+      mlx->rows_ = rows;
+      send_answer_chunk(channel_mask, ":ROW=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":ROW=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "COLUMNS=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t columns = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((columns >= 1) && (columns <= 16))
+    {
+      mlx->columns_ = columns;
+      send_answer_chunk(channel_mask, ":COLUMNS=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":COLUMNS=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "START_ROW=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t start_row = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((start_row >= 1) && (start_row <= 4))
+    {
+      mlx->start_row_ = start_row;
+      uint8_t max_rows = 4 - start_row + 1;
+      if (mlx->rows_ > max_rows) mlx->rows_ = max_rows;
+      send_answer_chunk(channel_mask, ":START_ROW=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":START_ROW=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "START_COLUMN=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t start_column = atoi(input+strlen(var_name));
+    send_answer_chunk(channel_mask, "+cs:", 0);
+    uint8_to_hex(buf, sa);
+    send_answer_chunk(channel_mask, buf, 0);
+    if ((start_column >= 1) && (start_column <= 16))
+    {
+      mlx->start_column_ = start_column;
+      uint8_t max_columns = 16 - start_column + 1;
+      if (mlx->columns_ > max_columns) mlx->columns_ = max_columns;
+      send_answer_chunk(channel_mask, ":START_COLUMN=OK [hub-register]", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":START_COLUMN=FAIL; outbound", 1);
+    }
+    return;
+  }
+
 
   // finally we have a catch all to inform the user that they asked something unknown.
   send_answer_chunk(channel_mask, "+cs:", 0);
