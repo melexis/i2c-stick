@@ -2,8 +2,10 @@ import serial
 import time
 import re
 
+
 class I2CStick:
     ser = None
+
     def __init__(self, port):
         self.open(port)
 
@@ -15,22 +17,19 @@ class I2CStick:
         self.ser.flushOutput()
         time.sleep(0.1)
 
-
     def close(self):
         if self.ser is not None:
             self.ser.close()
         self.ser = None
 
-
     def read_continuous_message(self):
-        line = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+        line = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
         if line.startswith("@"):
             values = line.split(":")
             if values[2] == 'mv':
                 mv_list = [float(v) for v in values[-1].split(",")]
                 return {'sa': int(values[-3], 16), 'time': int(values[-2]), 'drv': int(values[1], 16), 'mv': mv_list}
         return None
-
 
     def stop_continuous_mode(self):
         self.ser.write(b'!')
@@ -39,20 +38,17 @@ class I2CStick:
         self.ser.flushOutput()
         time.sleep(0.1)
 
-
     def trigger_continuous_mode(self):
         self.ser.write(b'!')
         time.sleep(0.1)
         self.ser.flushInput()
         self.ser.flushOutput()
         self.ser.write(b';')
-        self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
-
+        self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
 
     def run_cmd(self, cmd):
-        self.ser.write(bytes(cmd+"\n", 'utf-8'))
-        return self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
-
+        self.ser.write(bytes(cmd + "\n", 'utf-8'))
+        return self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
 
     def mlx(self):
         result = []
@@ -68,13 +64,12 @@ class I2CStick:
                 return None
             result.append(a[1])
             start = time.time()
-            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            a = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
             t = time.time() - start
 
         self.ser.timeout = timeout_old
 
         return result
-
 
     def fv(self):
         a = self.run_cmd("fv")
@@ -83,7 +78,6 @@ class I2CStick:
             return None
         return a[1]
 
-
     def bi(self):
         a = self.run_cmd("bi")
         a = a.split(":")
@@ -91,18 +85,14 @@ class I2CStick:
             return None
         return a[1]
 
-
     def i2c_read(self, sa):
         return None
-
 
     def i2c_write(self, sa):
         return None
 
-
     def i2c_addressed_read(self, sa):
         return None
-
 
     def ch(self):
         result = {}
@@ -142,17 +132,15 @@ class I2CStick:
                     result[key].append(item)
 
             start = time.time()
-            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            a = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
             t = time.time() - start
 
         self.ser.timeout = timeout_old
 
         return result
 
-
     def ch_write(self):
         return None
-
 
     def scan(self):
         result = []
@@ -176,13 +164,12 @@ class I2CStick:
                     item['product'] = a[3]
                     result.append(item)
             start = time.time()
-            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            a = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
             t = time.time() - start
 
         self.ser.timeout = timeout_old
 
         return result
-
 
     def ls(self):
         result = []
@@ -206,16 +193,15 @@ class I2CStick:
                     item['product'] = a[3]
                     result.append(item)
             start = time.time()
-            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            a = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
             t = time.time() - start
 
         self.ser.timeout = timeout_old
 
         return result
 
-
     def dis(self, sa, disable=1):
-        a = self.run_cmd("dis:{:02X}:{}".format(sa,disable))
+        a = self.run_cmd("dis:{:02X}:{}".format(sa, disable))
         a = a.split(":")
         if a[0] != "dis":
             return None
@@ -223,18 +209,15 @@ class I2CStick:
             return None
         if a[2] == "FAIL":
             return "FAIL:" + a[3]
-        result = {}
-        result['status'] = a[3]
-        result['disabled'] = int(a[2])
+        result = {'status': a[3],
+                  'disabled': int(a[2])}
         return result
 
-
     def mv(self, sa):
-        self.ser.write('mv:{:02X}'.format(sa).encode()+ b'\n')
-        line = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+        self.ser.write('mv:{:02X}'.format(sa).encode() + b'\n')
+        line = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
         values = line.split(":")[-1]
         return [float(value) for value in values.split(",")]
-
 
     def sn(self, sa):
         a = self.run_cmd("sn:{:02X}".format(sa))
@@ -244,7 +227,6 @@ class I2CStick:
         if a[1] != "{:02X}".format(sa):
             return None
         return a[2]
-
 
     def cs(self, sa):
         result = {}
@@ -282,7 +264,7 @@ class I2CStick:
                         value[i] = new_value
                     else:
                         value[i] = new_value['value']
-                if (len(value) == 1):
+                if len(value) == 1:
                     value = value[0]
                 result['read_only'][a[0]] = value
             else:
@@ -304,17 +286,16 @@ class I2CStick:
                         value[i] = new_value
                     else:
                         value[i] = new_value['value']
-                if (len(value) == 1):
+                if len(value) == 1:
                     value = value[0]
                 result[a[0]] = value
             start = time.time()
-            a = self.ser.readline().decode('utf-8').rstrip()   # read a '\n' terminated line
+            a = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
             t = time.time() - start
 
         self.ser.timeout = timeout_old
 
         return result
-
 
     def cs_write(self, sa, item, value):
         a = self.run_cmd("+cs:{:02X}:{}={}".format(sa, item, value))
@@ -329,7 +310,6 @@ class I2CStick:
             return a[2]
         return a[2]
 
-
     def nd(self, sa):
         a = self.run_cmd("nd:{:02X}".format(sa))
         a = a.split(":")
@@ -340,7 +320,6 @@ class I2CStick:
         if a[2] == "FAIL":
             return "FAIL:" + a[3]
         return int(a[2])
-
 
     def mr(self, sa, address, count):
         a = self.run_cmd("mr:{:02X}:{:04X},{:04X}".format(sa, address, count))
@@ -370,9 +349,8 @@ class I2CStick:
 
         return result
 
-
     def mw(self, sa, address, data):
-        if type(data) == list:
+        if type(data) is list:
             data_str = ",".join(["{:04X}".format(x) for x in data])
         else:
             data_str = "{:04X}".format(data)
@@ -383,7 +361,6 @@ class I2CStick:
         if a[1] != "{:02X}".format(sa):
             return None
         return a[2]
-
 
     def mv(self, sa):
         a = self.run_cmd("mv:{:02X}".format(sa))
@@ -397,7 +374,6 @@ class I2CStick:
         result['values'] = [float(x) for x in a[3].split(',')]
         return result
 
-
     def raw(self, sa):
         a = self.run_cmd("raw:{:02X}".format(sa))
         a = a.split(":")
@@ -408,21 +384,17 @@ class I2CStick:
         if a[2] == "FAIL":
             return "FAIL:" + a[3]
         result = {}
-        result = {}
         result['time_ms'] = int(a[2])
         result['values'] = [int(x, 16) for x in a[3].split(',')]
-        result['values'] = [x if x < 2**15 else x - 2**16 for x in result['values']]
+        result['values'] = [x if x < 2 ** 15 else x - 2 ** 16 for x in result['values']]
         return result
-
 
     def pwm(self, pin, pwm):
         a = self.run_cmd("pwm:{}:{}".format(pin, pwm))
         return a
 
 
-
-
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     mis = I2CStick("COM154")
     print(mis.mv(0x3A))
     mis.trigger_continuous_mode()
