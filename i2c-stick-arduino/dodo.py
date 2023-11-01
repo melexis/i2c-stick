@@ -1,3 +1,7 @@
+# todo:
+# [ ] bumpver version synchronization between firmware / web / python
+# [ ]
+
 import sys
 import subprocess
 
@@ -160,7 +164,6 @@ def task_arduino_install_cli():
         'verbosity': 2,
         'targets': [ARDUINO_CLI],
         'uptodate': [run_once],
-        'title': show_cmd,
     }
 
 
