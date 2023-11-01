@@ -226,6 +226,16 @@ hal_i2c_direct_write(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes)
     WIRE.write(write_buffer[i]);
   }
   byte result = WIRE.endTransmission();     // stop transmitting
+
+  if (write_n_bytes == 0) // shorthand for hal_i2c_slave_address_available
+  {
+    if (result != 2)
+    { // found SA; return OK
+      return 0;
+    }
+    return 1; // not found return not-ok.
+  }
+
 #ifdef ARDUINO_ARCH_RP2040
   if (result == 4) result = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
 #endif
@@ -250,7 +260,11 @@ hal_i2c_indirect_read(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes,
 #endif
   if (result != 0) return result;
 
-  WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
+  result = WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
+  if (result != uint8_t(read_n_bytes))
+  {
+    return -1;
+  }
   for (uint16_t i=0; i<read_n_bytes; i++)
   {
     read_buffer[i] = (uint8_t)WIRE.read();
