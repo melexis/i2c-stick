@@ -74,6 +74,7 @@ void send_broadcast_message(const char *msg);
 void send_answer_chunk(uint8_t channel_mask, const char *answer, uint8_t terminate);
 void send_answer_chunk_binary(uint8_t channel_mask, const char *blob, uint16_t length, uint8_t terminate);
 
+
 int16_t i2c_stick_register_driver(uint8_t sa, uint8_t drv);
 
 #ifdef __cplusplus

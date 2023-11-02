@@ -17,13 +17,14 @@ extern "C" {
 #endif
 
 #ifndef MAX_MLX90621_SLAVES
-#define MAX_MLX90621_SLAVES 8
+#define MAX_MLX90621_SLAVES 1
 #endif // MAX_MLX90621_SLAVES
 
 #define MLX90621_ERROR_BUFFER_TOO_SMALL "Buffer too small"
 #define MLX90621_ERROR_COMMUNICATION "Communication error"
 #define MLX90621_ERROR_NO_FREE_HANDLE "No free handle; pls recompile firmware with higher 'MAX_MLX90621_SLAVES'"
 #define MLX90621_ERROR_OUT_OF_RANGE "Out of range"
+#define MLX90621_ERROR_NOT_IMPLEMENTED "Function not implemented"
 
 
 static MLX90621_t *g_mlx90621_list[MAX_MLX90621_SLAVES];
@@ -115,23 +116,23 @@ check_90621_calibration_ranges(paramsMLX90621 *mlx90621)
 {  
   // those ranges are experimental; one might require to tweak those...
 
-  // Serial.printf("mlx90621->vTh25: %d\n", mlx90621->vTh25);
-  // Serial.printf("mlx90621->kT1: %f\n", mlx90621->kT1);
-  // Serial.printf("mlx90621->kT2: %f\n", mlx90621->kT2);
-  // Serial.printf("mlx90621->tgc: %f\n", mlx90621->tgc);
-  // Serial.printf("mlx90621->KsTa: %f\n", mlx90621->KsTa);
-  // Serial.printf("mlx90621->ksTo: %f\n", mlx90621->ksTo);
-  // for (int i=0; i<64; i++)
-  // {
-  //   Serial.printf("mlx90621->alpha[%d]: %fe-6\n", i, (mlx90621->alpha[i] * 1000000.0));
-  // }
+//   Serial.printf("mlx90621->vTh25: %d\n", mlx90621->vTh25);
+//   Serial.printf("mlx90621->kT1: %f\n", mlx90621->kT1);
+//   Serial.printf("mlx90621->kT2: %f\n", mlx90621->kT2);
+//   Serial.printf("mlx90621->tgc: %f\n", mlx90621->tgc);
+//   Serial.printf("mlx90621->KsTa: %f\n", mlx90621->KsTa);
+//   Serial.printf("mlx90621->ksTo: %f\n", mlx90621->ksTo);
+//   for (int i=0; i<64; i++)
+//   {
+//     Serial.printf("mlx90621->alpha[%d]: %fe-6\n", i, (mlx90621->alpha[i] * 1000000.0));
+//   }
 
   if ((mlx90621->vTh25 < 20000) ||
       (mlx90621->vTh25 > 30000))
   {
     return 1;    
   }
-  if ((mlx90621->kT1 < 70.0) ||
+  if ((mlx90621->kT1 < 7.0) ||
       (mlx90621->kT1 > 100.0))
   {
     return 1;
@@ -395,12 +396,7 @@ cmd_90621_nd(uint8_t sa, uint8_t *nd, char const **error_message)
   }
 
   *nd = 1; // not implemented, but there is 'always' new data...
-
-  // todo:
-  //
-  // read the status from the sensor and check if new data is available (ND=New Data).
-  //
- }
+}
 
 
 void
@@ -426,15 +422,21 @@ cmd_90621_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **err
   }
   *sn_count = 4;
 
-  sn_list[0] = 0;
-  sn_list[1] = 0;
-  sn_list[2] = 0;
-  sn_list[3] = 0;
-
-  // todo:
   //
   // read the serial number from the sensor.
   //
+  uint8_t data[8];
+  int result = MLX90621_I2CReadEEPROM(0x50, 0xF8, 8, data);
+  if (result != 0)
+  {
+    *error_message = MLX90621_ERROR_COMMUNICATION;
+    return;
+  }
+
+  for (uint8_t i=0; i<4; i++)
+  {
+      sn_list[i] = (uint16_t)(data[i*2]) + ((uint16_t)(data[i*2+1]) << 8);
+  }
 }
 
 
@@ -508,14 +510,6 @@ cmd_90621_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   itoa(mlx->start_column_, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
-  // todo:
-  //
-  // Send the answer back in the format
-  // "cs:<sa>:<key>=<value>"
-  //
-
-
-  // todo: 
   //
   // Send the configuration of the MV header, unit and resolution back to the terminal(not to sensor!)
   //
@@ -752,21 +746,15 @@ cmd_90621_mr(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
   *bit_per_address = 16;
   *address_increments = 1;
 
-  if ((mem_start_address + mem_count) > 0x00FF)
+  bool is_out_of_range = true;
+
+  if ((0x2400 <= mem_start_address) && (mem_start_address < 0x2400+128)) // EEPROM!
   {
-    *bit_per_address = 0;
-    *address_increments = 0;
-    *error_message = MLX90621_ERROR_OUT_OF_RANGE;
-    return;
-  }
-
-  for (uint16_t i=0; i<mem_count; i++)
-  {
-  	// todo: read memory from the sensor!
-
-    //int32_t result = MLX90614_SMBusRead(sa, mem_start_address + i, &mem_data[i]);
-
-    //if (result != 0)
+    is_out_of_range = false;
+    mem_start_address -= 0x2400;
+    if (mem_start_address + mem_count > 128) mem_count = 128 - mem_start_address;
+    int32_t result = MLX90621_I2CReadEEPROM(0x50, mem_start_address*2, mem_count*2, (uint8_t *)mem_data);
+    if (result != 0)
     {
       *bit_per_address = 0;
       *address_increments = 0;
@@ -774,55 +762,39 @@ cmd_90621_mr(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
       return;
     }
   }
+
+  if ((0x4000 <= mem_start_address) && (mem_start_address < (0x4000+256))) // RAM - raw values!
+  {
+    is_out_of_range = false;
+    mem_start_address -= 0x4000;
+    if (mem_start_address + mem_count > 256) mem_count = 256 - mem_start_address;
+    int result = MLX90621_I2CRead(mlx->slave_address_, 0x02, mem_start_address, 1, mem_count, mem_data);
+    if (result != 0)
+    {
+      *bit_per_address = 0;
+      *address_increments = 0;
+      *error_message = MLX90621_ERROR_COMMUNICATION;
+      return;
+    }
+  }
+
+  if (is_out_of_range)
+  {
+    *bit_per_address = 0;
+    *address_increments = 0;
+    *error_message = MLX90621_ERROR_OUT_OF_RANGE;
+    return;
+  }
+
 }
 
 
 void
 cmd_90621_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message)
 {
-  MLX90621_t *mlx = cmd_90621_get_handle(sa);
-  if (mlx == NULL)
-  {
-    *bit_per_address = 0;
-    *address_increments = 0;
-    *error_message = MLX90621_ERROR_NO_FREE_HANDLE;
-    return;
-  }
-  if (mlx->slave_address_ & 0x80)
-  {
-    cmd_90621_init(sa);
-  }
-
-  *bit_per_address = 16;
-  *address_increments = 1;
-
-  if ((mem_start_address + mem_count) > 0x00FF)
-  {
-    *bit_per_address = 0;
-    *address_increments = 0;
-    *error_message = MLX90621_ERROR_OUT_OF_RANGE;
-    return;
-  }
-
-  for (uint16_t i=0; i<mem_count; i++)
-  {
-    uint16_t addr = mem_start_address+i;
-    // todo:
-    //
-    // check if write to EEPROM, the procedure is correct here.
-    // MW(Memory Write) is able to write anywhere, except the (mlx-)locked areas
-    //
-
-    // int result = MLX90614_SMBusWrite(sa, addr, mem_data[i]);
-
-    // if (result < 0)
-    {
-      *bit_per_address = 0;
-      *address_increments = 0;
-      *error_message = MLX90621_ERROR_COMMUNICATION;
-      return;
-    }
-  }
+  *bit_per_address = 0;
+  *address_increments = 0;
+  *error_message = MLX90621_ERROR_NOT_IMPLEMENTED;
 }
 
 
