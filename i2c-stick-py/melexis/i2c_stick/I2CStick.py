@@ -10,6 +10,7 @@ class I2CStick:
         self.open(port)
 
     def open(self, port):
+        """Open the PC connection to the I2C-stick"""
         self.ser = serial.Serial(port, 921600, timeout=5)
         self.ser.write(b'!')
         time.sleep(0.2)
@@ -18,11 +19,13 @@ class I2CStick:
         time.sleep(0.1)
 
     def close(self):
+        """Close the PC connection to the I2C-stick"""
         if self.ser is not None:
             self.ser.close()
         self.ser = None
 
     def read_continuous_message(self):
+        """Read the message from continuous mode"""
         line = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
         if line.startswith("@"):
             values = line.split(":")
@@ -32,6 +35,7 @@ class I2CStick:
         return None
 
     def stop_continuous_mode(self):
+        """Stop continuous mode"""
         self.ser.write(b'!')
         time.sleep(0.1)
         self.ser.flushInput()
@@ -39,6 +43,7 @@ class I2CStick:
         time.sleep(0.1)
 
     def trigger_continuous_mode(self):
+        """Start continuous mode"""
         self.ser.write(b'!')
         time.sleep(0.1)
         self.ser.flushInput()
@@ -47,10 +52,12 @@ class I2CStick:
         self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
 
     def run_cmd(self, cmd):
+        """Generic run command"""
         self.ser.write(bytes(cmd + "\n", 'utf-8'))
         return self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
 
     def mlx(self):
+        """MeLeXis test command"""
         result = []
         timeout_old = self.ser.timeout
         self.ser.timeout = 0.25
@@ -72,13 +79,18 @@ class I2CStick:
         return result
 
     def fv(self):
+        """Firmware Version command"""
         a = self.run_cmd("fv")
         a = a.split(":")
         if a[0] != "fv":
             return None
         return a[1]
 
+    def firmware_version(self):
+        return self.fv()
+
     def bi(self):
+        """get Board Information"""
         a = self.run_cmd("bi")
         a = a.split(":")
         if a[0] != "bi":
@@ -95,6 +107,7 @@ class I2CStick:
         return None
 
     def ch(self):
+        """get Configure Host command"""
         result = {}
         timeout_old = self.ser.timeout
         self.ser.timeout = 0.25
@@ -139,10 +152,43 @@ class I2CStick:
 
         return result
 
-    def ch_write(self):
-        return None
+    def ch_write(self, item, value):
+        """set the Configuration of the Host(I2C-stick)"""
+        """
+        +ch:I2C_FREQ=F100k
+        2023/11/01 17:16:01.613 ->     - +ch:I2C_FREQ=F400k
+        2023/11/01 17:16:01.613 ->     - +ch:I2C_FREQ=F1M
+        2023/11/01 17:16:01.613 ->     - +ch:I2C_FREQ=F50k
+        2023/11/01 17:16:01.613 ->     - +ch:I2C_FREQ=F20k
+        2023/11/01 17:16:01.613 ->     - +ch:I2C_FREQ=F10k
+        
+        """
+        str_value = str(value)
+        if item == "I2C_FREQ":
+            items = {
+                10000: 'F10k',
+                20000: 'F20k',
+                50000: 'F50k',
+                100000: 'F100k',
+                400000: 'F400k',
+                1000000: 'F1M',
+            }
+            if value not in items.keys():
+                return "value not valid"
+            str_value = items[value]
+        a = self.run_cmd("+ch:{}={}".format(item, str_value))
+        a = a.split(":")
+        # +ch:OK [host-register]
+        # +ch:I2C_FREQ=F2M:ERROR: Invalid value
+        if a[0] != "+ch":
+            return "wrong command returned"
+        if a[1].startswith("OK"):
+            return
+        else:
+            return a[1]
 
     def scan(self):
+        """SCAN the i2c bus for slaves"""
         result = []
         timeout_old = self.ser.timeout
         self.ser.timeout = 0.25
@@ -172,6 +218,7 @@ class I2CStick:
         return result
 
     def ls(self):
+        """List Slaves which are previously found by scan command"""
         result = []
         timeout_old = self.ser.timeout
         self.ser.timeout = 0.25
@@ -201,6 +248,7 @@ class I2CStick:
         return result
 
     def dis(self, sa, disable=1):
+        """DISable a slave from continuous mode"""
         a = self.run_cmd("dis:{:02X}:{}".format(sa, disable))
         a = a.split(":")
         if a[0] != "dis":
@@ -213,13 +261,8 @@ class I2CStick:
                   'disabled': int(a[2])}
         return result
 
-    def mv(self, sa):
-        self.ser.write('mv:{:02X}'.format(sa).encode() + b'\n')
-        line = self.ser.readline().decode('utf-8').rstrip()  # read a '\n' terminated line
-        values = line.split(":")[-1]
-        return [float(value) for value in values.split(",")]
-
     def sn(self, sa):
+        """read the Serial Number of the slave"""
         a = self.run_cmd("sn:{:02X}".format(sa))
         a = a.split(":")
         if a[0] != "sn":
@@ -229,6 +272,7 @@ class I2CStick:
         return a[2]
 
     def cs(self, sa):
+        """read the Configuration of the Slave"""
         result = {}
         timeout_old = self.ser.timeout
         self.ser.timeout = 0.25
@@ -298,6 +342,7 @@ class I2CStick:
         return result
 
     def cs_write(self, sa, item, value):
+        """write the Configuration of the Slave"""
         a = self.run_cmd("+cs:{:02X}:{}={}".format(sa, item, value))
         a = a.split(":")
         # +cs:3A:MEAS_SELECT=OK [host&mlx-register]'
@@ -311,6 +356,7 @@ class I2CStick:
         return a[2]
 
     def nd(self, sa):
+        """check if New Data is available for the slave"""
         a = self.run_cmd("nd:{:02X}".format(sa))
         a = a.split(":")
         if a[0] != "nd":
@@ -322,6 +368,7 @@ class I2CStick:
         return int(a[2])
 
     def mr(self, sa, address, count):
+        """Memory Read from the slave"""
         a = self.run_cmd("mr:{:02X}:{:04X},{:04X}".format(sa, address, count))
         a = a.split(":")
         if a[0] != "mr":
@@ -350,6 +397,7 @@ class I2CStick:
         return result
 
     def mw(self, sa, address, data):
+        """Memory Write to the slave"""
         if type(data) is list:
             data_str = ",".join(["{:04X}".format(x) for x in data])
         else:
@@ -363,6 +411,7 @@ class I2CStick:
         return a[2]
 
     def mv(self, sa):
+        """Measure Values from slave sensor"""
         a = self.run_cmd("mv:{:02X}".format(sa))
         a = a.split(":")
         if a[0] != "mv":
@@ -375,6 +424,7 @@ class I2CStick:
         return result
 
     def raw(self, sa):
+        """measure RAW values from slave sensor"""
         a = self.run_cmd("raw:{:02X}".format(sa))
         a = a.split(":")
         if a[0] != "raw":
@@ -390,6 +440,7 @@ class I2CStick:
         return result
 
     def pwm(self, pin, pwm):
+        """set a PWM duty cycle on a pin of the I2C-stick"""
         a = self.run_cmd("pwm:{}:{}".format(pin, pwm))
         return a
 
