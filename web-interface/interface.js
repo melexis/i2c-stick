@@ -79,8 +79,25 @@ $(window).resize(function() {
   set_spatial_chart_height();
 });
 
-
 $(document).ready(function () {
+  $(".js-modal-trigger").click(function(){
+    const modal = $(this).data('target');
+    let target = $("#"+modal+'.modal');
+    target.addClass('is-active');
+  });
+
+  $('.modal-background, .modal-close, .modal-card-head .delete, .modal-card-foot .button').click(function(){
+    $(this).closest('.modal').removeClass('is-active');
+  });
+
+  $(document).on( "keydown", function(event) {
+    if (event.which == 27)
+    { // close any modal upon ESC-key press...
+      $(".modal").removeClass('is-active');
+    }
+  });
+
+
   $(".checkmark.default_off").prop('checked', false);
 
   // navbar main buttons-clicks
@@ -124,20 +141,20 @@ $(document).ready(function () {
 
 
 function get_date_time() {
-        var now     = new Date(); 
+        var now     = new Date();
         var year    = now.getFullYear();
-        var month   = now.getMonth()+1; 
+        var month   = now.getMonth()+1;
         var day     = now.getDate();
         var hour    = now.getHours();
         var minute  = now.getMinutes();
-        var second  = now.getSeconds(); 
-        var ms      = now.getMilliseconds(); 
+        var second  = now.getSeconds();
+        var ms      = now.getMilliseconds();
         if(month.toString().length == 1) {
              month = '0'+month;
         }
         if(day.toString().length == 1) {
              day = '0'+day;
-        }   
+        }
         if(hour.toString().length == 1) {
              hour = '0'+hour;
         }
@@ -146,14 +163,14 @@ function get_date_time() {
         }
         if(second.toString().length == 1) {
              second = '0'+second;
-        }   
+        }
         if(ms.toString().length == 1) {
              ms = '00'+ms;
-        }   
+        }
         if(ms.toString().length == 2) {
              ms = '0'+ms;
-        }   
-        var dateTime = year+'/'+month+'/'+day+' '+hour+':'+minute+':'+second+'.'+ms;   
+        }
+        var dateTime = year+'/'+month+'/'+day+' '+hour+':'+minute+':'+second+'.'+ms;
          return dateTime;
 }
 
@@ -189,12 +206,12 @@ function hex_to_rgba(hex, a){
     throw new Error('Bad Hex');
 }
 
-// img_dat is a imageData object, 
+// img_dat is a imageData object,
 // x,y are floats in the original coordinates
 // Returns the pixel colour at that point as an array of RGBA
 // Will copy last pixel's colour
 // https://stackoverflow.com/a/46249246/2491604
-function get_pixel_value(img_dat, x,y, result = []){ 
+function get_pixel_value(img_dat, x,y, result = []){
   let i;
   // clamp and floor coordinate
   const ix1 = (x < 0 ? 0 : x >= img_dat.width ? img_dat.width - 1 : x)| 0;
@@ -202,7 +219,7 @@ function get_pixel_value(img_dat, x,y, result = []){
   // get next pixel pos
   const ix2 = ix1 === img_dat.width -1 ? ix1 : ix1 + 1;
   const iy2 = iy1 === img_dat.height -1 ? iy1 : iy1 + 1;
-  // get interpolation position 
+  // get interpolation position
   const xpos = x % 1;
   const ypos = y % 1;
   // get pixel index
@@ -235,7 +252,7 @@ function sent_command(command)
 {
   const sent_event = new CustomEvent('sent', { detail: command });
   div = document.querySelector('#sent_data');
-  div.dispatchEvent(sent_event);  
+  div.dispatchEvent(sent_event);
 }
 
 
@@ -257,7 +274,7 @@ $(document).ready(function () {
 
   if (!("serial" in navigator)) {
     // The Web Serial API is NOT supported.
-    $('button').prop('disabled', true); // disable all buttons!
+    $('button').not('.keep').prop('disabled', true); // disable all buttons!
     $("#serial_terminal").append('<pre>==> This page uses "Web Serial API".</pre><br>');
     $("#serial_terminal").append('<pre>https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API</pre><br>');
     $("#serial_terminal").append('<pre> </pre><br>');
@@ -279,7 +296,7 @@ $(document).ready(function () {
   div = document.querySelector('#receive_data');
 
   // show receiving data in terminal...
-  div.addEventListener('receive', (e) => { 
+  div.addEventListener('receive', (e) => {
     var value_str = dec.decode(e.detail).replaceAll('\r', '');
     let dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
@@ -335,7 +352,7 @@ $(document).ready(function () {
   }, false);
 
   // listener to generate recieve_line events.
-  div.addEventListener('receive', (e) => { 
+  div.addEventListener('receive', (e) => {
     var value_str = dec.decode(e.detail);
     value_str = value_str.replaceAll('\r', '');
 
@@ -371,7 +388,7 @@ $(document).ready(function () {
   });
 
   // listener to update the chart
-  div.addEventListener('receive_line', (e) => { 
+  div.addEventListener('receive_line', (e) => {
     if ($("#chk_transient_enable").is(":checked"))
     {
       let line = e.detail;
@@ -453,7 +470,7 @@ $(document).ready(function () {
                          data: [],
                          backgroundColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 0.2),
                          borderColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 1),
-                         borderWidth: 1,      
+                         borderWidth: 1,
                 };
               connected_slaves[sa]['transient_chart']['trace_i'].push(trace_i);
               transient_chart.data.datasets.push(dataset);
@@ -469,7 +486,7 @@ $(document).ready(function () {
                        data: [],
                        backgroundColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 0.2),
                        borderColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 1),
-                       borderWidth: 1,      
+                       borderWidth: 1,
               };
             connected_slaves[sa]['transient_chart']['trace_i'] = trace_i;
             transient_chart.data.datasets.push(dataset);
@@ -495,7 +512,7 @@ $(document).ready(function () {
         }
 
         // todo: truncate of data needs to take longest period of time for 100 samples, then cut on time.
-        for (let index = 0; index < transient_chart.data.datasets.length; ++index) 
+        for (let index = 0; index < transient_chart.data.datasets.length; ++index)
         {
           while (transient_chart.data.datasets[index].data.length > 100)
           {
@@ -505,11 +522,11 @@ $(document).ready(function () {
 
         let now = new Date();
         var time_diff = now - last_chart_update_time;
-        if (time_diff > 50) 
+        if (time_diff > 50)
         {
           let x_min = transient_chart.data.datasets[0].data[0].x;
           let x_max = x_min;
-          for (let index = 0; index < transient_chart.data.datasets.length; ++index) 
+          for (let index = 0; index < transient_chart.data.datasets.length; ++index)
           {
             for (let j = 0; j < transient_chart.data.datasets[index].data.length; j++)
             {
@@ -535,7 +552,7 @@ $(document).ready(function () {
 
 
   // spatial chart updater
-  div.addEventListener('receive_line', (e) => { 
+  div.addEventListener('receive_line', (e) => {
     if ($("#chk_spatial_enable").is(":checked") &&
         $("#tab_int_spatial").hasClass("is-active")
        )
@@ -895,7 +912,7 @@ $(document).ready(function () {
     }
 
     if (line.startsWith ("cs:"))
-    { // parse config of slave 
+    { // parse config of slave
       // "cs:3A:DRV=05"
       let tmp = line.split(":");
       let sa = tmp[1];
@@ -972,20 +989,20 @@ $(document).ready(function () {
               {
                 let v = Number(value[i]);
                 value[i] = v;
-              }            
+              }
             }
           } else
           {
             if (!isNaN(value))
             {
               let v = Number(value);
-              value = v;              
-            }            
+              value = v;
+            }
           }
         } catch (error)
-        { 
+        {
           // ignore error, keep value as a string.
-        }        
+        }
       }
 
       if (sa in connected_slaves === false)
@@ -1006,11 +1023,11 @@ $(document).ready(function () {
 
 
   div = document.querySelector('#sent_data');
-  div.addEventListener('sent', async (e) => { 
+  div.addEventListener('sent', async (e) => {
     let value_str = e.detail;
     if (value_str.length === 1)
     {
-      value_str += '\n'; 
+      value_str += '\n';
     }
     let value_byte = enc.encode(value_str);
 
@@ -1032,13 +1049,13 @@ $(document).ready(function () {
     {
       term.scrollTop(term[0].scrollHeight);
     }
-    
+
     await writer.write(value_byte);
 
   }, false);
 
   // reset the connected_slave container when we detect a scan or ls command.
-  div.addEventListener('sent', async (e) => { 
+  div.addEventListener('sent', async (e) => {
     let value_str = e.detail;
     if (['5', 'scan\n', '5\n', 'ls\n'].includes(value_str))
     {
@@ -1078,12 +1095,17 @@ $(document).ready(function () {
               }
           }
       }
-  });  
+  });
 
   transient_chart.options.animation.duration = 0;
   transient_chart.options.scales.x.ticks.count = 8;
 });
 
+function pop_error(message)
+{
+  $('#error-popup').find('.modal-card-body').html('<p>'+message+'</p>');
+  $("#error-popup").addClass('is-active');
+}
 
 async function serial_open_and_start_reading()
 {
@@ -1118,7 +1140,6 @@ async function serial_open_and_start_reading()
     $("div#main button.button").prop('disabled', true); // disable input entry!
     $("#btn_open_port").removeClass("is-light");
 
-
     dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
     {
@@ -1133,6 +1154,7 @@ async function serial_open_and_start_reading()
     }
 
     term.append("<pre>"+dt+" ## </pre>" + "<pre>" + "[disconnected] " + error.toString() + "</pre><br>");
+    pop_error(error.toString());
 
     if ($("#chk_auto_scroll").is(":checked"))
     {
@@ -1146,7 +1168,7 @@ async function serial_open_and_start_reading()
   $("div#main button.button").prop('disabled', false); // disable input entry!
   $("#btn_open_port").addClass("is-light");
 
-  while (serial.readable && keep_reading) 
+  while (serial.readable && keep_reading)
   {
     reader = serial.readable.getReader();
     writer = serial.writable.getWriter();
@@ -1238,6 +1260,14 @@ $("#btn_open_port").click(async () => {
   {
     await close_port();
   }
+
+  if (!('serial' in navigator))
+  {
+    pop_error($("#serial_terminal").html());
+    return;
+  }
+
+
   const ports = await navigator.serial.getPorts();
   for (let i = 0; i< ports.length; i++)
   {
@@ -1264,7 +1294,7 @@ $("#btn_open_port").click(async () => {
   closed_promise = serial_open_and_start_reading();
 });
 
-async function close_port() 
+async function close_port()
 {
   if (serial != null)
   {
@@ -1326,7 +1356,7 @@ $("#serial_send").on('keyup', function (val, key) {
     if (single_char_cmd_list.includes(current_entry))
     { // yes! Only here we have to sent without enter/sent click
       sent_command(current_entry);
-      $(this).val(""); 
+      $(this).val("");
     }
   }
 
@@ -1335,7 +1365,7 @@ $("#serial_send").on('keyup', function (val, key) {
     if (val.key === "Enter")
     { // Yes, we have an Enter! let's sent the current buffer!
       sent_command(current_entry + '\n');
-      $(this).val(""); 
+      $(this).val("");
     }
   }
 });
@@ -1413,7 +1443,7 @@ function heat_map(t_min, t_max)
 //<!--     <script src="./intel-hex.browser.js"></script> -->
 //    <!-- <script src="https://unpkg.com/nrf-intel-hex"></script> -->
 //
-//  
+//
 //
 //function concatTypedArrays(a, b) { // a, b TypedArray of same type
 //    var c = new (a.constructor)(a.length + b.length);
