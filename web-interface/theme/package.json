@@ -10,8 +10,12 @@
   },
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
     "bulma": "^0.9.4",
-    "node-sass": "^8.0.0"
+    "cssnano": "^6.0.1",
+    "node-sass": "^8.0.0",
+    "postcss": "^8.4.31",
+    "cssnano-cli": "^1.0.5",
+    "terser": "^5.24.0"
   }
 }

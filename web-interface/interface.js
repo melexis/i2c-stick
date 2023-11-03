@@ -813,16 +813,31 @@ $(document).ready(function () {
     if (line.startsWith ("ch:"))
     { // index slave
       let tmp = line.split(":");
-      // ch:FORMAT=DEC(0)
-      // ch:I2C_FREQ=400kHz(1)
+      // old format:
+      //   ch:FORMAT=DEC(0)
+      //   ch:I2C_FREQ=400kHz(1)
+      // new format as of V1.4
+      //   FORMAT=0(DEC)
+      //   I2C_FREQ=2(1MHz)
       let key_value = tmp[1].split('=');
       if (key_value[0] == 'I2C_FREQ')
       {
+        let value_list = ["F100k", "F400k", "F1M", "F50k", "F20k", "F10k"];
+
+        // try the old format
         let index = Number(key_value[1].split(/[\(\)]/)[1]);
-        let value = ["F100k", "F400k", "F1M", "F50k", "F20k", "F10k"][index];
+        let value = value_list[index];
         if (value !== undefined)
         {
           $('select.combo_i2c_freq').val(value);
+        } else
+        { // give the new format a shot
+          let index = Number(key_value[1].split(/[\(\)]/)[0]);
+          let value = value_list[index];
+          if (value !== undefined)
+          {
+            $('select.combo_i2c_freq').val(value);
+          }
         }
       }
     }
