@@ -68,6 +68,13 @@ function set_spatial_chart_height()
     $("canvas#spatial_chart").prop('height', new_height);
     $("canvas#spatial_chart").prop('width', new_width);
     heat_map(10, 45);
+    let c = document.getElementById("spatial_chart");
+    let ctx = c.getContext('2d');
+    ctx.fillStyle = "black";
+    ctx.font = "20px Courier New";
+    ctx.fillText("Spatial chart will show a thermal image", 20, 50);
+    ctx.fillText("for MLX90640 and MLX90641 only", 20, 80);
+
   }, 100);
 }
 
