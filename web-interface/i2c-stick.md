@@ -7,8 +7,8 @@ copyright: 'Melexis'
 
 Yet another I2C interface...  
 However our `i2c-stick` aims to:  
-- Provide a low cost interface towards our 3.3V supplied sensors who uses the I2C communication bus.
-- Use as much as possbile off-the-shelf available material/modules.
+- Provide a low cost interface towards our 3.3V supplied sensors who use the I2C communication bus.
+- Use as much as possible off-the-shelf available material/modules.
 - Create a friction free getting starting experience. 
 - Enable prototyping using its small sensor boards.
 - Provide a reference `code` (firmware) based on the arduino platform; snippets can be used in end-user-applications.
@@ -16,7 +16,7 @@ However our `i2c-stick` aims to:
 ## What is i2c-stick?
 
 A microcontroller with on one hand a USB CDC UART and on the other a I2C master at 3.3V.  
-We provide open source firmware and an userinterface to easily get started with our I2C/3.3V based sensors.
+We provide open source firmware and a user-interface to easily get started with our I2C/3.3V based sensors.
 ![i2c-stick overview](assets/melexis-i2c-stick-overview.webp)
 
 ## Getting started
@@ -25,10 +25,10 @@ We provide open source firmware and an userinterface to easily get started with 
 1. Select the serial port of the i2c-stick.
 1. Enable the chart (transient or spatial)
 1. The `Scan` button will scan the I2C bus for slaves
-1. The `Start` button will start continiously measuring all recognised slaves
-1. The `Stop` button will stop continiously measuring the slaves
+1. The `Start` button will start continuously measuring all recognised slaves
+1. The `Stop` button will stop continuously measuring the slaves
 1. The slaves will appear on the left column.
-1. The `MV` button will initiate a singlee 'Measure Values' action.
+1. The `MV` button will initiate a single 'Measure Values' action.
 1. The terminal let you do other cool stuff, more on this later.
 
 ## The hardware
@@ -70,6 +70,6 @@ This disclaimer will be governed by and construed in accordance with Belgian law
 The invalidity or ineffectiveness of any of the provisions of this disclaimer does not affect the validity or effectiveness of the other provisions. The previous versions of this document are repealed.  
 </div>
 
-Melexis ©2022
+Melexis ©2023
 
 IATF 16949 and ISO 14001 Certified

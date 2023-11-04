@@ -5,12 +5,12 @@ copyright: 'Melexis'
 
 ## Firmware
 
-The sources can be found at github: https://github.com/melexis/i2c-stick/tree/main/i2c-stick-arduino
+The sources can be found at GitHub: https://github.com/melexis/i2c-stick/tree/main/i2c-stick-arduino
 
 ## Firmware installation
 
 The boards you get from us(Melexis) for the I2C STICK are pre-programmed.  
-Meaning that this information is only needed when you buy yourself from off the shelve resources or you want to upgrade firmware.
+Meaning that this information is only needed when you buy yourself from off the shelf resources or when you want to upgrade firmware.
 
 ### Instruction
 
