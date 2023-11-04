@@ -389,7 +389,7 @@ $(document).ready(function () {
 
   // listener to update the chart
   div.addEventListener('receive_line', (e) => {
-    if ($("#chk_transient_enable").is(":checked"))
+    if ($("#tab_int_transient").hasClass("is-active"))
     {
       let line = e.detail;
 
@@ -455,9 +455,9 @@ $(document).ready(function () {
           {
             connected_slaves[sa]['transient_chart']['trace_i'] = [];
             let len = connected_slaves[sa].cs.MV_HEADER.length;
-            if (len > 192)
+            if (len > 8)
             {
-              len = 2;
+              len = 8;
             }
             for (let i=0; i<len; i++)
             {
@@ -553,9 +553,7 @@ $(document).ready(function () {
 
   // spatial chart updater
   div.addEventListener('receive_line', (e) => {
-    if ($("#chk_spatial_enable").is(":checked") &&
-        $("#tab_int_spatial").hasClass("is-active")
-       )
+    if ($("#tab_int_spatial").hasClass("is-active"))
     {
       let line = e.detail;
 
