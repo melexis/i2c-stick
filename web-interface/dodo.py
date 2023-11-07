@@ -277,7 +277,14 @@ def task_web():
     html_file = jinja2_file.with_suffix("").with_suffix(".html")
     return {
         'actions': [(do_generate, [jinja2_file.name, html_file.name])],
-        'file_dep': [jinja2_file.name],
+        'file_dep': [jinja2_file.name,
+                     'interface.min.js',
+                     'melexis-bulma.min.css',
+                     'products.html',
+                     'i2c-stick.html',
+                     'firmware.html',
+                     'firmware_list.html',
+                     ],
         'task_dep': ['pip:requirements.txt',
                      'bulma',
                      'convert_md',

@@ -37,7 +37,7 @@ function set_terminal_height()
     let total_height = $(window).height();
     let height1 = $("#serial_send").outerHeight();
     let height2 = $("nav.navbar").outerHeight();
-    let height3 = $("div#tab_interface > div.tabs").outerHeight();
+    let height3 = $("div#div_interface > div.tabs").outerHeight();
     let new_height = total_height - height1 - height2 - height3;
     $("main#log").height(new_height);
   }, 100);
@@ -49,7 +49,7 @@ function set_transient_chart_height()
   setTimeout(function() {
     let total_height = $(window).height();
     let height1 = $("nav.navbar").outerHeight();
-    let height2 = $("div#tab_interface > div.tabs").outerHeight();
+    let height2 = $("div#div_interface > div.tabs").outerHeight();
     let new_height = total_height - height1 - height2 - 10;
     $("div#div_transient_chart").height(new_height);
   }, 100);
@@ -61,7 +61,7 @@ function set_spatial_chart_height()
   setTimeout(function() {
     let total_height = $(window).height();
     let height1 = $("nav.navbar").outerHeight();
-    let height2 = $("div#tab_interface > div.tabs").outerHeight();
+    let height2 = $("div#div_interface > div.tabs").outerHeight();
     let new_height = total_height - height1 - height2 - 10;
     let new_width = $("div#div_spatial_chart").innerWidth();
     $("div#div_spatial_chart").height(new_height);
@@ -116,7 +116,7 @@ $(document).ready(function () {
     $(this).siblings().removeClass("is-active");
     $(this).addClass("is-active");
     $("div#tabs_main > div").removeClass("is-active");
-    $("div#tabs_main > div#"+ $(this).attr('id')).addClass("is-active");
+    $("div#tabs_main > div#"+ $(this).attr('id').replaceAll("tab_", 'div_') ).addClass("is-active");
   });
 
   $("#btn_open_port").click(function () {
@@ -884,7 +884,7 @@ $(document).ready(function () {
 
       new_div = $($(".slave_transient_chart").html()).attr("data-sa", sa);
       new_div.children("#btn_config").text("@"+sa+":"+device);
-      new_div.children("#slave_enable").prop('checked', disabled ? false : true);
+      new_div.children(".slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
       });
@@ -895,7 +895,7 @@ $(document).ready(function () {
 
       new_div = $($(".slave_spatial_chart").html()).attr("data-sa", sa);
       new_div.children("#btn_config").text("@"+sa+":"+device);
-      new_div.children("#slave_enable").prop('checked', disabled ? false : true);
+      new_div.children("slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
       });
@@ -906,7 +906,7 @@ $(document).ready(function () {
 
       new_div = $($(".slave_terminal").html()).attr("data-sa", sa);
       new_div.children("#btn_config").text("@"+sa+":"+device);
-      new_div.children("#slave_enable").prop('checked', disabled ? false : true);
+      new_div.children(".slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
       });

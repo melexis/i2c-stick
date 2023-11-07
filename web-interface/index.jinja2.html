@@ -68,7 +68,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
 <div class="template slave_transient_chart">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
     <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
     <button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
   </div>
@@ -76,7 +76,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
 <div class="template slave_spatial_chart">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
     <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
 <button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
   </div>
@@ -84,7 +84,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
 <div class="template slave_terminal">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
     <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
     <button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
     <button id="btn_raw" data-cmd="raw" title="get RAW sensor data" class="button cmd is-small is-info">RAW</button>
@@ -96,19 +96,20 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
 <div id="main">
   <div id="tabs_main">
-    <div id="tab_i2c_stick" class="content is-active">
+    <div id="div_i2c_stick" class="content is-active">
       {% include "i2c-stick.html" without context %}
     </div>
 
-    <div id="tab_products" class="content my_col col-12">
+    <div id="div_products" class="content my_col col-12">
       {% include "products.html" without context %}
     </div>
 
-    <div id="tab_firmware" class="content my_col col-12">
+    <div id="div_firmware" class="content my_col col-12">
       {% include "firmware.html" without context %}
+      {% include "firmware_list.html" without context %}
     </div>
 
-    <div id="tab_interface" class="my_col col-12">
+    <div id="div_interface" class="my_col col-12">
       <div id="interface_tabs" class="tabs is-fullwidth is-no-margin">
         <ul>
           <li id="tab_int_transient" class="is-active"><a>Transient chart</a></li>
@@ -129,10 +130,10 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
           <div class="column is-4">
 
             <div class="checkboxes">
-              <input type="checkbox" id="chk_auto_scroll" name="chk_auto_scroll" value="auto_scroll" checked=true class="checkmark">
+              <input type="checkbox" id="chk_auto_scroll" name="chk_auto_scroll" value="auto_scroll" checked="checked" class="checkmark">
                 <label for="chk_auto_scroll">Auto scroll</label>
               <br/>
-              <input type="checkbox" id="chk_add_datetime" name="chk_add_datetime" value="add_datetime" checked=true class="checkmark">
+              <input type="checkbox" id="chk_add_datetime" name="chk_add_datetime" value="add_datetime" checked="checked" class="checkmark">
                 <label for="chk_add_datetime">Add date&time</label>
               <br/>
               <div class="select is-fullwidth is-small is-link">
