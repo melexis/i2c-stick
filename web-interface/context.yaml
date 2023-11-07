@@ -1,0 +1,13 @@
+# this first section is to be removed once doit is fully setup!
+versioning:
+  web_interface: Mar 2023
+  firmware: V1.2.0
+# END OF 1ST SECTION
+
+version: V1.2.99
+
+
+arduino: !include ../i2c-stick-arduino/context.yaml
+
+drivers:
+  - !include mlx90632_interface.yml

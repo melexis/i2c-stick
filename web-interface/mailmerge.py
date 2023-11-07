@@ -14,7 +14,7 @@ YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_di
 
 loader=FileSystemLoader(THIS_DIR)
 
-with open('context.yml', 'r') as file:
+with open('context.yaml', 'r') as file:
     context = yaml.load(file, Loader=yaml.FullLoader)
 
 
