@@ -35,16 +35,4 @@ Homepage = "https://github.com/melexis/i2c-stick"
 melexis_i2c_stick = "melexis.i2c_stick.__main__:main"
 
 
-[tool.bumpver]
-current_version = "0.4.1"
-version_pattern = "MAJOR.MINOR.PATCH[PYTAGNUM]"
-commit_message = "bump version {old_version} -> {new_version}"
-commit = false
-tag = false
-push = false
-
-[tool.bumpver.file_patterns]
-"pyproject.toml" = [
-    'version = "{version}"',
-]
 

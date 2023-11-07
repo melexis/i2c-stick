@@ -1,0 +1,23 @@
+# pyproject.toml
+[bumpver]
+current_version = "1.3.5"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "bump version to {new_version} (from {old_version})"
+tag_message = "V{new_version}"
+tag_scope = "default"
+pre_commit_hook = ""
+post_commit_hook = ""
+commit = true
+tag = true
+push = true
+
+[bumpver.file_patterns]
+"readme.md" = [
+    '^Current version: V{version}$',
+]
+"i2c-stick-arduino/i2c_stick_fw_config.h" = [
+    '^#define FW_VERSION "V{version}"$'
+]
+"i2c-stick-py/pyproject.toml" = [
+    '^version = "{version}"$'
+]
