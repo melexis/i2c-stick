@@ -1,6 +1,6 @@
 # Melexis i2c-stick
 
-Current version: V1.3.0
+Current version: V1.3.6
 
 The web interface here:  
 https://www.melexis.com/i2c-stick/
