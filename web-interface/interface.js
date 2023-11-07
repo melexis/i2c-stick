@@ -140,7 +140,7 @@ $(document).ready(function () {
     $(this).siblings().removeClass("is-active");
     $(this).addClass("is-active");
     $(this).parent().parent().siblings("div.tab_content").removeClass("is-active");
-    $(this).parent().parent().siblings("div.tab_content#"+ $(this).attr('id')).addClass("is-active");
+    $(this).parent().parent().siblings("div.tab_content#"+ $(this).attr('id').replace("tab_", "div_")).addClass("is-active");
   });
 
 });
@@ -883,7 +883,7 @@ $(document).ready(function () {
       connected_slaves[sa] = {drv: drv, device: device, raw: raw, disabled: disabled};
 
       new_div = $($(".slave_transient_chart").html()).attr("data-sa", sa);
-      new_div.children("#btn_config").text("@"+sa+":"+device);
+      new_div.children(".btn_config").text("@"+sa+":"+device);
       new_div.children(".slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
@@ -894,7 +894,7 @@ $(document).ready(function () {
       new_div.appendTo("#transient_chart_slaves");
 
       new_div = $($(".slave_spatial_chart").html()).attr("data-sa", sa);
-      new_div.children("#btn_config").text("@"+sa+":"+device);
+      new_div.children(".btn_config").text("@"+sa+":"+device);
       new_div.children("slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
@@ -905,7 +905,7 @@ $(document).ready(function () {
       new_div.appendTo("#spatial_chart_slaves");
 
       new_div = $($(".slave_terminal").html()).attr("data-sa", sa);
-      new_div.children("#btn_config").text("@"+sa+":"+device);
+      new_div.children(".btn_config").text("@"+sa+":"+device);
       new_div.children(".slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
         button_action(this);
