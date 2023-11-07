@@ -10,3 +10,4 @@ web-interface/*.html
 !web-interface/assets/**/*.min.css
 web-interface/melexis-bulma.css
 .idea
+venv

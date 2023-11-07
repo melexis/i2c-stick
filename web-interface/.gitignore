@@ -1,2 +1,5 @@
 index.html
 firmware.html
+tools
+.doit.db*
+__pycache__
