@@ -21,3 +21,7 @@ push = true
 "i2c-stick-py/pyproject.toml" = [
     '^version = "{version}"$'
 ]
+"web-interface/index.jinja2.html" = [
+    '<a id="site_version" title="Release" class="button is-info is-outlined is-small">V{version}</a>'
+]
+
