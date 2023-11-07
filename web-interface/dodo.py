@@ -258,13 +258,42 @@ def task_convert_md():
 
 
 def task_web():
+    def do_generate(template, output):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
+        loader = jinja2.FileSystemLoader(this_dir)
+
+        env = jinja2.Environment(
+            loader=loader,
+            autoescape=jinja2.select_autoescape()
+        )
+
+        jinja_t = env.get_template(template)
+
+        with open(output, 'w') as output_f:
+            output_f.write(jinja_t.render(context))
+
+    jinja2_file = Path("index.jinja2.html")
+    html_file = jinja2_file.with_suffix("").with_suffix(".html")
     return {
-        'actions': ["ls", 'ls -al'],
-        'file_dep': ['theme/node_modules/.bin/cssnano'],
-        'task_dep': ['pip:requirements.txt'],
-        'verbosity': 2,
-        # 'targets': [output_file.name],
+        'actions': [(do_generate, [jinja2_file.name, html_file.name])],
+        'file_dep': [jinja2_file.name],
+        'task_dep': ['pip:requirements.txt',
+                     'bulma',
+                     'convert_md',
+                     'minify_css',
+                     'minify_js',
+                     ],
+        'targets': [html_file.name],
         'title': show_cmd,
+    }
+
+
+def task_serve():
+    return {
+        'actions': ['python -m http.server'],
+        'title': show_cmd,
+        'file_dep': ['index.html'],
     }
 
 
