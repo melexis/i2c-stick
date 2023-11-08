@@ -38,7 +38,6 @@ import platform
 import urllib.request
 from html.parser import HTMLParser
 
-
 from yamlinclude import YamlIncludeConstructor
 
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -119,7 +118,7 @@ def task_pip():
 
 
 def task_install_nodejs():
-    """Arduino: Install the arduino-cli tool"""
+    """Install the Node.js (and npm) tool"""
 
     class MyHTMLParser(HTMLParser):
         def __init__(self):
@@ -134,11 +133,10 @@ def task_install_nodejs():
                             # yes, we have a valid href link to a package
                             self.pkg_list.append(attr[1])
 
-
-    def do_install(task):
+    def do_install():
         if not Path("tools").is_dir():
             os.mkdir('tools')
-        system = platform.system().lower()
+        this_system = platform.system().lower()
         os_dict = {
             'linux': 'linux',
             'windows': 'win',
@@ -159,14 +157,14 @@ def task_install_nodejs():
                 break
 
         bits = 'x86'
-        if sys.maxsize > 2**32:
+        if sys.maxsize > 2 ** 32:
             bits = 'x64'
 
         zip_suffix = 'tar.gz'
-        if system == 'windows':
+        if this_system == 'windows':
             zip_suffix = 'zip'
 
-        url = node_url + "/node-{}-{}-{}.{}".format(version, os_dict[system], bits, zip_suffix)
+        url = node_url + "/node-{}-{}-{}.{}".format(version, os_dict[this_system], bits, zip_suffix)
 
         print("downloading:", url)
 
@@ -192,9 +190,74 @@ def task_install_nodejs():
 
     return {
         'basename': 'install-nodejs',
-        'actions': [(do_install, )],
+        'actions': [(do_install,)],
         'verbosity': 2,
-        # 'targets': [ARDUINO_CLI],
+        'uptodate': [run_once],
+    }
+
+
+def task_install_nodejs_packages():
+    """Install nodejs packages: bulma css framework, cssnano, terser"""
+    return {
+        'basename': 'install-nodejs-package',
+        'actions': ["cd theme && npm install"],
+        'file_dep': ['theme/package.json'],
+        'verbosity': 2,
+        'uptodate': [run_once],
+    }
+
+
+
+
+
+def task_install_pandoc():
+    """Install the pandoc tool (markdown converter)"""
+
+    def do_install():
+        if not Path("tools").is_dir():
+            os.mkdir('tools')
+        this_system = platform.system().lower()
+        suffix_dict = {
+            'linux': 'linux-amd64.tar.gz',
+            'windows': 'windows-x86_64.zip',
+            'darwin': 'x86_64-macOS.zip',
+        }
+        suffix = suffix_dict[this_system]
+        version = '3.1.9'
+
+        url = f"https://github.com/jgm/pandoc/releases/download/{version}/pandoc-{version}-{suffix}"
+
+        print("downloading:", url)
+
+        import io
+        import zipfile
+        from contextlib import closing
+        import requests
+
+        r = requests.get(url)
+        with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
+            for member in archive.infolist():
+                l = list(Path(member.filename).parts)
+                l[0] = 'tools'
+                if len(l) > 1:
+                    if l[1] == 'bin':
+                        del l[1]
+                    if not l[1].startswith('pandoc'):
+                        continue
+                output = os.sep.join(l)
+                if member.is_dir():
+                    if not Path(output).is_dir():
+                        os.mkdir(output)
+                else:
+                    print(f"unzip file: {output}\n")
+                    with open(output, "wb") as file:
+                        file.write(archive.read(member))
+        return
+
+    return {
+        'basename': 'install-pandoc',
+        'actions': [(do_install,)],
+        'verbosity': 2,
         'uptodate': [run_once],
     }
 
@@ -235,7 +298,7 @@ def task_generate():
 def task_bulma():
     return {
         'targets': ['melexis-bulma.css'],
-        'actions': ["cd theme && npm run css-build",],
+        'actions': ["cd theme && npm run css-build", ],
         'file_dep': ['theme/sass/melexis-bulma.scss'],
         'task_dep': [],  # add task to install the theme
         'title': show_cmd,
@@ -251,7 +314,7 @@ def task_minify_js():
         min_js_file = js_file.with_suffix("").with_suffix(".min.js")
         yield {
             'name': min_js_file,
-            'actions': ["{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file),],
+            'actions': ["{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file), ],
             'file_dep': [js_file],
             'task_dep': ['pip:requirements.txt'],
             'targets': [min_js_file],
@@ -272,7 +335,7 @@ def task_minify_css():
         min_css_file = css_file.with_suffix("").with_suffix(".min.css")
         yield {
             'name': min_css_file,
-            'actions': ["{} {} {}".format(CSSNANO, css_file, min_css_file),],
+            'actions': ["{} {} {}".format(CSSNANO, css_file, min_css_file), ],
             'file_dep': [css_file],
             'task_dep': ['pip:requirements.txt'],
             'targets': [min_css_file],
@@ -287,7 +350,9 @@ def task_convert_md():
         html_file = md_file.with_suffix("").with_suffix(".html")
         yield {
             'name': html_file,
-            'actions': ["{} {} -f markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax -o {}".format(PANDOC, md_file, html_file),],
+            'actions': [
+                "{} {} -f markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax -o {}".format(
+                    PANDOC, md_file, html_file), ],
             'file_dep': [md_file],
             'task_dep': ['pip:requirements.txt'],
             'targets': [html_file],
