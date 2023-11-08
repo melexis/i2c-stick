@@ -77,6 +77,13 @@ def remove(path):
             raise ValueError("path {} is not a file or dir.".format(p))
 
 
+def set_node_path():
+    this_dir = os.path.dirname(os.path.abspath(__file__))
+    tools_dir = os.path.join(this_dir, 'tools')
+    os.environ["PATH"] = tools_dir + ";" + os.environ["PATH"]
+    return True
+
+
 def show_cmd(task):
     msg = task.name
     if task.verbosity >= 2:
@@ -203,12 +210,6 @@ def task_install_nodejs():
 def task_install_nodejs_packages():
     """Install nodejs packages: bulma css framework, cssnano, terser"""
 
-    def set_node_path():
-        this_dir = os.path.dirname(os.path.abspath(__file__))
-        tools_dir = os.path.join(this_dir, 'tools')
-        os.environ["PATH"] = tools_dir + ";" + os.environ["PATH"]
-        return True
-
     return {
         'basename': 'install-nodejs-package',
         'actions': [(set_node_path, ),
@@ -312,7 +313,9 @@ def task_bulma():
     return {
         'targets': ['melexis-bulma.css'],
         'clean': True,
-        'actions': ["cd theme && npm run css-build", ],
+        'actions': [(set_node_path, ),
+                    "cd theme && npm run css-build",
+                   ],
         'file_dep': ['theme/sass/melexis-bulma.scss'],
         'task_dep': ['install-nodejs-package', ],  # add task to install the theme
         'title': show_cmd,
@@ -327,8 +330,11 @@ def task_minify_js():
             continue
         min_js_file = js_file.with_suffix("").with_suffix(".min.js")
         yield {
+            'basename': 'minify-js',
             'name': min_js_file,
-            'actions': ["{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file), ],
+            'actions': [(set_node_path, ),
+                        "{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file),
+                       ],
             'file_dep': [js_file],
             'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_js_file],
@@ -349,8 +355,11 @@ def task_minify_css():
             continue
         min_css_file = css_file.with_suffix("").with_suffix(".min.css")
         yield {
+            'basename': 'minify-css',
             'name': min_css_file,
-            'actions': ["{} {} {}".format(CSSNANO, css_file, min_css_file), ],
+            'actions': [(set_node_path, ),
+                        "{} {} {}".format(CSSNANO, css_file, min_css_file),
+                       ],
             'file_dep': [css_file],
             'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_css_file],
@@ -365,6 +374,7 @@ def task_convert_md():
     for md_file in md_files:
         html_file = md_file.with_suffix("").with_suffix(".html")
         yield {
+            'basename': 'convert-md',
             'name': html_file,
             'actions': [
                 "{} {} -f markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax -o {}".format(
@@ -407,9 +417,9 @@ def task_web():
                      ],
         'task_dep': ['pip:requirements.txt',
                      'bulma',
-                     'convert_md',
-                     'minify_css',
-                     'minify_js',
+                     'convert-md',
+                     'minify-css',
+                     'minify-js',
                      ],
         'targets': [html_file.name],
         'clean': True,
