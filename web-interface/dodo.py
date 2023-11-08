@@ -8,7 +8,7 @@ import subprocess
 CONTEXT_FILE = "context.yaml"
 
 DOIT_CONFIG = {'action_string_formatting': 'both',
-               'default_tasks': ['web'],
+               'default_tasks': ['web', 'cleaner'],
                }
 PIP_USER = " --user "
 if sys.prefix != sys.base_prefix:  # check if we are in a virtual environment
@@ -89,12 +89,15 @@ def task_cleaner():
     """ Clean the entire repository for a git commit & be ready to re-compile the entire project!"""
 
     def do_clean():
-        patterns = ["build",
-                    "package",
+        patterns = ["dist",
+                    "tools",
                     "*~",
-                    "*.bak"]
+                    "*.bak",
+                    'theme/node_modules',
+                    ]
         for pattern in patterns:
             try:
+                print(f"cleaner: {pattern}")
                 remove(pattern)
             except Exception as err:
                 print(str(err))
@@ -190,6 +193,7 @@ def task_install_nodejs():
 
     return {
         'basename': 'install-nodejs',
+        'targets': ['tools/npm'],
         'actions': [(do_install,)],
         'verbosity': 2,
         'uptodate': [run_once],
@@ -198,16 +202,24 @@ def task_install_nodejs():
 
 def task_install_nodejs_packages():
     """Install nodejs packages: bulma css framework, cssnano, terser"""
+
+    def set_node_path():
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        tools_dir = os.path.join(this_dir, 'tools')
+        os.environ["PATH"] = tools_dir + ";" + os.environ["PATH"]
+        return True
+
     return {
         'basename': 'install-nodejs-package',
-        'actions': ["cd theme && npm install"],
+        'actions': [(set_node_path, ),
+                    "cd theme && npm install",
+                    ],
+        'targets': ['theme/node_modules'],
         'file_dep': ['theme/package.json'],
+        'task_dep': ['install-nodejs', ],
         'verbosity': 2,
         'uptodate': [run_once],
     }
-
-
-
 
 
 def task_install_pandoc():
@@ -249,7 +261,7 @@ def task_install_pandoc():
                     if not Path(output).is_dir():
                         os.mkdir(output)
                 else:
-                    print(f"unzip file: {output}\n")
+                    print(f"unzip file: {output}")
                     with open(output, "wb") as file:
                         file.write(archive.read(member))
         return
@@ -257,6 +269,7 @@ def task_install_pandoc():
     return {
         'basename': 'install-pandoc',
         'actions': [(do_install,)],
+        'targets': [PANDOC],
         'verbosity': 2,
         'uptodate': [run_once],
     }
@@ -298,9 +311,10 @@ def task_generate():
 def task_bulma():
     return {
         'targets': ['melexis-bulma.css'],
+        'clean': True,
         'actions': ["cd theme && npm run css-build", ],
         'file_dep': ['theme/sass/melexis-bulma.scss'],
-        'task_dep': [],  # add task to install the theme
+        'task_dep': ['install-nodejs-package', ],  # add task to install the theme
         'title': show_cmd,
     }
 
@@ -316,8 +330,9 @@ def task_minify_js():
             'name': min_js_file,
             'actions': ["{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file), ],
             'file_dep': [js_file],
-            'task_dep': ['pip:requirements.txt'],
+            'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_js_file],
+            'clean': True,
             'title': show_cmd,
         }
 
@@ -337,8 +352,9 @@ def task_minify_css():
             'name': min_css_file,
             'actions': ["{} {} {}".format(CSSNANO, css_file, min_css_file), ],
             'file_dep': [css_file],
-            'task_dep': ['pip:requirements.txt'],
+            'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_css_file],
+            'clean': True,
             'title': show_cmd,
         }
 
@@ -354,8 +370,9 @@ def task_convert_md():
                 "{} {} -f markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax -o {}".format(
                     PANDOC, md_file, html_file), ],
             'file_dep': [md_file],
-            'task_dep': ['pip:requirements.txt'],
+            'task_dep': ['pip:requirements.txt', 'install-pandoc'],
             'targets': [html_file],
+            'clean': True,
             'title': show_cmd,
         }
 
@@ -395,6 +412,7 @@ def task_web():
                      'minify_js',
                      ],
         'targets': [html_file.name],
+        'clean': True,
         'title': show_cmd,
     }
 
