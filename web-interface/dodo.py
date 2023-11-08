@@ -96,8 +96,7 @@ def task_cleaner():
     """ Clean the entire repository for a git commit & be ready to re-compile the entire project!"""
 
     def do_clean():
-        patterns = ["dist",
-                    "tools",
+        patterns = ["tools",
                     "*~",
                     "*.bak",
                     'theme/node_modules',
@@ -139,9 +138,10 @@ def task_install_nodejs():
             if tag == 'a':
                 for attr in attrs:
                     if attr[0] == 'href':
-                        if attr[1].startswith('node-v'):
+                        url_split = attr[1].split('/')
+                        if url_split[-1].startswith('node-v'):
                             # yes, we have a valid href link to a package
-                            self.pkg_list.append(attr[1])
+                            self.pkg_list.append(url_split[-1])
 
     def do_install():
         if not Path("tools").is_dir():
@@ -162,7 +162,7 @@ def task_install_nodejs():
         for pkg in parser.pkg_list:
             s = pkg.split("-")
             if len(s) > 3:
-                print("nodejs version:", s[1])
+                print(f"nodejs version: '{s[1]}'")
                 version = s[1]
                 break
 
@@ -212,7 +212,7 @@ def task_install_nodejs_packages():
 
     return {
         'basename': 'install-nodejs-package',
-        'actions': [(set_node_path, ),
+        'actions': [(set_node_path,),
                     "cd theme && npm install",
                     ],
         'targets': ['theme/node_modules'],
@@ -313,9 +313,9 @@ def task_bulma():
     return {
         'targets': ['melexis-bulma.css'],
         'clean': True,
-        'actions': [(set_node_path, ),
+        'actions': [(set_node_path,),
                     "cd theme && npm run css-build",
-                   ],
+                    ],
         'file_dep': ['theme/sass/melexis-bulma.scss'],
         'task_dep': ['install-nodejs-package', ],  # add task to install the theme
         'title': show_cmd,
@@ -332,9 +332,9 @@ def task_minify_js():
         yield {
             'basename': 'minify-js',
             'name': min_js_file,
-            'actions': [(set_node_path, ),
+            'actions': [(set_node_path,),
                         "{} {} --compress --mangle --toplevel --output {}".format(TERSER, js_file, min_js_file),
-                       ],
+                        ],
             'file_dep': [js_file],
             'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_js_file],
@@ -357,9 +357,9 @@ def task_minify_css():
         yield {
             'basename': 'minify-css',
             'name': min_css_file,
-            'actions': [(set_node_path, ),
+            'actions': [(set_node_path,),
                         "{} {} {}".format(CSSNANO, css_file, min_css_file),
-                       ],
+                        ],
             'file_dep': [css_file],
             'task_dep': ['pip:requirements.txt', 'install-nodejs-package'],
             'targets': [min_css_file],
@@ -432,6 +432,30 @@ def task_serve():
         'actions': ['python -m http.server'],
         'title': show_cmd,
         'file_dep': ['index.html'],
+    }
+
+
+def task_dist():
+    file_dep = ["googleb1ddae72a396d098.html",
+                "index.html",
+                "interface.min.js",
+                "melexis-bulma.min.css",
+                "robots.txt",
+                "sitemap.txt",
+                ]
+    files = " ".join(file_dep)
+
+    def make_dist_dir():
+        if not Path("../dist").is_dir():
+            os.mkdir('../dist')
+
+    return {
+        'actions': [(make_dist_dir,),
+                    f"cp -frv {files} assets ../dist",
+                    ],
+        'file_dep': file_dep,
+        'title': show_cmd,
+        'verbosity': 2,
     }
 
 
