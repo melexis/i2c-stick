@@ -35,6 +35,9 @@ from pathlib import Path
 # from doit.action import CmdAction
 from doit.tools import run_once
 import platform
+import urllib.request
+from html.parser import HTMLParser
+
 
 from yamlinclude import YamlIncludeConstructor
 
@@ -115,28 +118,58 @@ def task_pip():
         }
 
 
-def task_arduino_install_cli():
+def task_install_nodejs():
     """Arduino: Install the arduino-cli tool"""
+
+    class MyHTMLParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.pkg_list = []
+
+        def handle_starttag(self, tag, attrs):
+            if tag == 'a':
+                for attr in attrs:
+                    if attr[0] == 'href':
+                        if attr[1].startswith('node-v'):
+                            # yes, we have a valid href link to a package
+                            self.pkg_list.append(attr[1])
+
 
     def do_install(task):
         if not Path("tools").is_dir():
             os.mkdir('tools')
         system = platform.system().lower()
         os_dict = {
-            'linux': 'Linux',
-            'windows': 'Windows',
-            'darwin': 'macOS',
+            'linux': 'linux',
+            'windows': 'win',
+            'darwin': 'darwin',
         }
-        bits = '32bit'
+        node_url = "https://nodejs.org/download/release/latest-v19.x"
+        parser = MyHTMLParser()
+        fp = urllib.request.urlopen(node_url)
+        html = fp.read().decode("utf8")
+
+        parser.feed(html)
+        version = ""
+        for pkg in parser.pkg_list:
+            s = pkg.split("-")
+            if len(s) > 3:
+                print("nodejs version:", s[1])
+                version = s[1]
+                break
+
+        bits = 'x86'
         if sys.maxsize > 2**32:
-            bits = '64bit'
+            bits = 'x64'
+
         zip_suffix = 'tar.gz'
         if system == 'windows':
             zip_suffix = 'zip'
 
-        url = "https://downloads.arduino.cc/arduino-cli/arduino-cli_latest_{}_{}.{}".format(os_dict[system], bits,
-                                                                                            zip_suffix)
+        url = node_url + "/node-{}-{}-{}.{}".format(version, os_dict[system], bits, zip_suffix)
+
         print("downloading:", url)
+
         import io
         import zipfile
         from contextlib import closing
@@ -145,15 +178,20 @@ def task_arduino_install_cli():
         r = requests.get(url)
         with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
             for member in archive.infolist():
-                if member.filename == Path(task.targets[0]).name:
-                    print("file: {}".format(member.filename))
-                    with open(task.targets[0], "wb") as file:
-                        file.write(archive.read(member))
+                l = list(Path(member.filename).parts)
+                l[0] = 'tools'
+                output = os.sep.join(l)
 
+                if member.is_dir():
+                    if not Path(output).is_dir():
+                        os.mkdir(output)
+                else:
+                    with open(output, "wb") as file:
+                        file.write(archive.read(member))
         return
 
     return {
-        'basename': 'arduino-install-cli',
+        'basename': 'install-nodejs',
         'actions': [(do_install, )],
         'verbosity': 2,
         # 'targets': [ARDUINO_CLI],
