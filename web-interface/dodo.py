@@ -268,27 +268,51 @@ def task_install_pandoc():
 
         import io
         import zipfile
+        import tarfile
         from contextlib import closing
         import requests
 
-        r = requests.get(url)
-        with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
-            for member in archive.infolist():
-                l = list(Path(member.filename).parts)
-                l[0] = 'tools'
-                if len(l) > 1:
-                    if l[1] == 'bin':
-                        del l[1]
-                    if not l[1].startswith('pandoc'):
-                        continue
-                output = os.sep.join(l)
-                if member.is_dir():
-                    if not Path(output).is_dir():
-                        os.mkdir(output)
-                else:
-                    print(f"unzip file: {output}")
-                    with open(output, "wb") as file:
-                        file.write(archive.read(member))
+        if suffix.endswith('tar.gz'):
+            response = requests.get(url, stream=True)
+
+            with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
+                for entry in tf:  # list each entry one by one
+                    l = list(Path(entry.name).parts)
+                    l[0] = 'tools'
+                    if len(l) > 1:
+                        if l[1] == 'bin':
+                            del l[1]
+                        if not l[1].startswith('pandoc'):
+                            continue
+                    output = os.sep.join(l)
+
+                    if entry.isdir():
+                        if not Path(output).is_dir():
+                            os.mkdir(output)
+                    if entry.isfile():
+                        file_obj = tf.extractfile(entry)
+                        with open(output, "wb") as file:
+                            file.write(file_obj.read())
+        else:
+
+            r = requests.get(url)
+            with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
+                for member in archive.infolist():
+                    l = list(Path(member.filename).parts)
+                    l[0] = 'tools'
+                    if len(l) > 1:
+                        if l[1] == 'bin':
+                            del l[1]
+                        if not l[1].startswith('pandoc'):
+                            continue
+                    output = os.sep.join(l)
+                    if member.is_dir():
+                        if not Path(output).is_dir():
+                            os.mkdir(output)
+                    else:
+                        print(f"unzip file: {output}")
+                        with open(output, "wb") as file:
+                            file.write(archive.read(member))
         return
 
     return {
