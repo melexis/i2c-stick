@@ -194,9 +194,6 @@ def task_install_nodejs():
 
             with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
                 for entry in tf:  # list each entry one by one
-                    file_obj = tf.extractfile(entry)
-                    print(entry.name)
-
                     l = list(Path(entry.name).parts)
                     l[0] = 'tools'
                     output = os.sep.join(l)
@@ -205,6 +202,7 @@ def task_install_nodejs():
                         if not Path(output).is_dir():
                             os.mkdir(output)
                     if entry.isfile():
+                        file_obj = tf.extractfile(entry)
                         with open(output, "wb") as file:
                             file.write(file_obj.read())
 
