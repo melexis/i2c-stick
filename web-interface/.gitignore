@@ -4,3 +4,4 @@ tools
 .doit.db*
 __pycache__
 firmware_list.md
+interface.js

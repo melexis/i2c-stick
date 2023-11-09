@@ -1,7 +1,3 @@
-# todo:
-# [ ] bumpver version synchronization between firmware / web / python
-# [ ]
-
 import sys
 import subprocess
 
@@ -67,7 +63,7 @@ CSSNANO = os.path.join('theme', 'node_modules', '.bin', 'cssnano' + cmd_suffix)
 PANDOC = os.path.join('tools', 'pandoc' + Path(sys.executable).suffix)
 NODE_TOOL = os.path.join('tools', 'bin', 'node')
 if platform.system().lower() == 'windows':
-    NODE_TOOL = os.path.join('tools', 'node')
+    NODE_TOOL = os.path.join('tools', 'node' + Path(sys.executable).suffix)
 
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
@@ -388,6 +384,9 @@ def task_bulma():
 def task_minify_js():
     working_directory = Path('.')
     js_files = list(working_directory.glob('*.js'))
+    if not Path("interface.js") in js_files:
+        js_files.append(Path("interface.js"))
+
     for js_file in js_files:
         if js_file.with_suffix("").suffix == '.min':
             continue
@@ -431,10 +430,12 @@ def task_minify_css():
         }
 
 
-@create_after(executed='generate', target_regex='.*\.html', creates=['convert-md'])
 def task_convert_md():
     working_directory = Path('.')
     md_files = list(working_directory.glob('*.md'))
+    if not Path("firmware_list.md") in md_files:
+        md_files.append(Path("firmware_list.md"))
+
     for md_file in md_files:
         html_file = md_file.with_suffix("").with_suffix(".html")
         yield {
@@ -480,7 +481,7 @@ def task_web():
                      ],
         'task_dep': ['pip:requirements.txt',
                      'bulma',
-                     'generate:firmware_list.md',
+                     'generate',
                      'convert-md',
                      'minify-css',
                      'minify-js',

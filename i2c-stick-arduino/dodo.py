@@ -1,7 +1,3 @@
-# todo:
-# [ ] bumpver version synchronization between firmware / web / python
-# [ ]
-
 import sys
 import subprocess
 
