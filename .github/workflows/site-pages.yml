@@ -32,8 +32,10 @@ jobs:
 #        run: pip install -r web-interface/requirements.txt
 #      - name: Install python requirements for i2c-stick-arduino
 #        run: pip install -r i2c-stick-arduino/requirements.txt
-      - name: Build web-interface distribution
-        run: cd web-interface && doit dist
+#      - name: Build web-interface distribution
+#        run: cd web-interface && doit dist
+#      - name: Build i2c-stick-arduino distribution
+#        run: cd i2c-stick-arduino && doit dist
       - name: Build all distribution (redundant)
         run: doit dist
       - name: Upload artifact
