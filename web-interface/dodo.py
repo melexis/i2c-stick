@@ -277,14 +277,20 @@ def task_install_pandoc():
 
             with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
                 for entry in tf:  # list each entry one by one
+                    print("entry:", entry.name)
                     l = list(Path(entry.name).parts)
+                    print(l)
                     l[0] = 'tools'
                     if len(l) > 1:
                         if l[1] == 'bin':
                             del l[1]
+                    print(l)
+                    if len(l) > 1:
                         if not l[1].startswith('pandoc'):
                             continue
+                    print(l)
                     output = os.sep.join(l)
+                    print("output", output)
 
                     if entry.isdir():
                         if not Path(output).is_dir():
