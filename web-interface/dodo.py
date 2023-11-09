@@ -149,6 +149,7 @@ def task_install_nodejs():
                             self.pkg_list.append(url_split[-1])
 
     def do_install():
+        print("NPM_TOOL", NPM_TOOL)
         if not Path("tools").is_dir():
             os.mkdir('tools')
         this_system = platform.system().lower()
@@ -510,6 +511,7 @@ def task_dist():
                     f"cp -frv {files} assets ../dist",
                     ],
         'file_dep': file_dep,
+        'uptodate': [False],
         'title': show_cmd,
         'verbosity': 2,
     }

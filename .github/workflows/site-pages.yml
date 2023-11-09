@@ -32,17 +32,15 @@ jobs:
         run: pip install -r web-interface/requirements.txt
       - name: Install python requirements for i2c-stick-arduino
         run: pip install -r i2c-stick-arduino/requirements.txt
-      - name: Build distribution
-        run: cd web-interface && doit install-pandoc
-      - name: Build distribution
-        run: ls -al web-interface/tools
-      - name: Build distribution
-        run: web-interface/tools/pandoc --version
-      - name: Build distribution
+      - name: Build web-interface distribution
         run: cd web-interface && doit dist
-      - name: Build distribution
+      - name: Build i2c-stick-arduino distribution
         run: cd i2c-stick-arduino && doit dist
-      - name: Build distribution
+      - name: debug
+        run: ls -al web-interface/tools
+      - name: debug
+        run: ls -al web-interface/tools/bin
+      - name: Build all distribution (redundant)
         run: doit dist
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
