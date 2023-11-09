@@ -37,6 +37,7 @@ from doit.tools import run_once
 import platform
 import urllib.request
 from html.parser import HTMLParser
+from doit import create_after
 
 from yamlinclude import YamlIncludeConstructor
 
@@ -80,7 +81,7 @@ def remove(path):
 def set_node_path():
     this_dir = os.path.dirname(os.path.abspath(__file__))
     tools_dir = os.path.join(this_dir, 'tools')
-    os.environ["PATH"] = tools_dir + ";" + os.environ["PATH"]
+    os.environ["PATH"] = tools_dir + os.pathsep + os.environ["PATH"]
     return True
 
 
@@ -303,6 +304,7 @@ def task_generate():
             'name': output_file.name,
             'actions': [(do_generate, [jinja2_file.name, output_file.name])],
             'file_dep': [jinja2_file.name],
+            'clean': True,
             'task_dep': ['pip:requirements.txt'],
             'targets': [output_file.name],
             'title': show_cmd,
@@ -368,6 +370,7 @@ def task_minify_css():
         }
 
 
+@create_after(executed='generate', target_regex='.*\.html', creates=['convert-md'])
 def task_convert_md():
     working_directory = Path('.')
     md_files = list(working_directory.glob('*.md'))
@@ -413,10 +416,10 @@ def task_web():
                      'products.html',
                      'i2c-stick.html',
                      'firmware.html',
-                     'firmware_list.html',
                      ],
         'task_dep': ['pip:requirements.txt',
                      'bulma',
+                     'generate:firmware_list.md',
                      'convert-md',
                      'minify-css',
                      'minify-js',

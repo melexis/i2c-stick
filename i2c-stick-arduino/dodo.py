@@ -16,6 +16,17 @@ if sys.prefix != sys.base_prefix:  # check if we are in a virtual environment
 
 try:
     import doit
+    import shutil
+    import os
+    import yaml
+    import jinja2
+    import yamlinclude
+    from glob import glob
+    from pathlib import Path
+    import serial.tools.list_ports
+    from doit.action import CmdAction
+    from doit.tools import run_once
+    import platform
 except (Exception,) as e:
     print("installing python packages from requirements.txt")
     t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER), text=True)
@@ -591,6 +602,22 @@ def task_add_driver():
         ],
         'uptodate': [False],  # make to run the task always
         'verbosity': 2,
+    }
+
+
+def task_dist():
+    def make_dist_dir():
+        if not Path("../dist").is_dir():
+            os.mkdir('../dist')
+
+    return {
+        'actions': [(make_dist_dir,),
+                    "cp -rfv build/* ../dist",
+                    ],
+        'verbosity': 2,
+        'task_dep': ['arduino-compile', ],
+        'title': show_cmd,
+        'uptodate': [False],
     }
 
 

@@ -11,3 +11,6 @@ web-interface/*.html
 web-interface/melexis-bulma.css
 .idea
 venv
+.doit.db*
+__pycache__
+

@@ -1,0 +1,3 @@
+{% for board in arduino.boards -%}
+- `{{board.nick}}`: [{{board.name}}]({{board.fqbn|replace(':', '.')}}/i2c-stick-arduino.ino.{{board.bin_extension}}) [product page]({{board.url}})
+{% endfor %}
