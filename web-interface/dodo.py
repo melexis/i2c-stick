@@ -53,9 +53,9 @@ if system == 'windows':
 TERSER = os.path.join('theme', 'node_modules', '.bin', 'terser' + cmd_suffix)
 CSSNANO = os.path.join('theme', 'node_modules', '.bin', 'cssnano' + cmd_suffix)
 PANDOC = os.path.join('tools', 'pandoc' + Path(sys.executable).suffix)
-NPM_TOOL = os.path.join('tools', 'bin', 'npm')
+NODE_TOOL = os.path.join('tools', 'bin', 'node')
 if platform.system().lower() == 'windows':
-    NPM_TOOL = os.path.join('tools', 'npm')
+    NODE_TOOL = os.path.join('tools', 'node')
 
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
@@ -149,7 +149,7 @@ def task_install_nodejs():
                             self.pkg_list.append(url_split[-1])
 
     def do_install():
-        print("NPM_TOOL", NPM_TOOL)
+        print("NODE_TOOL", NODE_TOOL)
         if not Path("tools").is_dir():
             os.mkdir('tools')
         this_system = platform.system().lower()
@@ -225,7 +225,7 @@ def task_install_nodejs():
 
     return {
         'basename': 'install-nodejs',
-        'targets': [NPM_TOOL],
+        'targets': [NODE_TOOL],
         'actions': [(do_install,)],
         'verbosity': 2,
         'uptodate': [run_once],
