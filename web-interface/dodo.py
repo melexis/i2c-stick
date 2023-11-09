@@ -23,7 +23,7 @@ except (Exception,) as e:
     print("\n\nPlease run this script again")
     print("Note: instead of 'python dodo.py', now you can use 'doit'")
     print("Note: use 'doit list' for a list of commands.")
-    exit(1)
+    exit(0)
 
 import shutil
 import os
