@@ -140,16 +140,22 @@ def task_arduino_install_cli():
         print("downloading:", url)
         import io
         import zipfile
+        import tarfile
         from contextlib import closing
         import requests
 
-        r = requests.get(url)
-        with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
-            for member in archive.infolist():
-                if member.filename == Path(task.targets[0]).name:
-                    print("file: {}".format(member.filename))
-                    with open(task.targets[0], "wb") as file:
-                        file.write(archive.read(member))
+        if zip_suffix == 'tar.gz':
+            response = requests.get(url, stream=True)
+            file = tarfile.open(fileobj=response.raw, mode="r|gz")
+            file.extractall(path="tools")
+        else:
+            r = requests.get(url)
+            with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
+                for member in archive.infolist():
+                    if member.filename == Path(task.targets[0]).name:
+                        print("file: {}".format(member.filename))
+                        with open(task.targets[0], "wb") as file:
+                            file.write(archive.read(member))
 
         return
 
