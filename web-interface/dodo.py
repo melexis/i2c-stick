@@ -299,8 +299,8 @@ def task_install_pandoc():
                         file_obj = tf.extractfile(entry)
                         with open(output, "wb") as file:
                             file.write(file_obj.read())
+            os.chmod('tools/pandoc', 0o777)
         else:
-
             r = requests.get(url)
             with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
                 for member in archive.infolist():
