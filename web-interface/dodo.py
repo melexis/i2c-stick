@@ -53,6 +53,9 @@ if system == 'windows':
 TERSER = os.path.join('theme', 'node_modules', '.bin', 'terser' + cmd_suffix)
 CSSNANO = os.path.join('theme', 'node_modules', '.bin', 'cssnano' + cmd_suffix)
 PANDOC = os.path.join('tools', 'pandoc' + Path(sys.executable).suffix)
+NPM_TOOL = os.path.join('tools', 'bin', 'npm')
+if platform.system().lower() == 'windows':
+    NPM_TOOL = os.path.join('tools', 'npm')
 
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
@@ -82,6 +85,7 @@ def set_node_path():
     this_dir = os.path.dirname(os.path.abspath(__file__))
     tools_dir = os.path.join(this_dir, 'tools')
     os.environ["PATH"] = tools_dir + os.pathsep + os.environ["PATH"]
+    os.environ["PATH"] = tools_dir + os.pathsep + "bin" + os.pathsep + os.environ["PATH"]
     return True
 
 
@@ -181,27 +185,48 @@ def task_install_nodejs():
 
         import io
         import zipfile
+        import tarfile
         from contextlib import closing
         import requests
 
-        r = requests.get(url)
-        with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
-            for member in archive.infolist():
-                l = list(Path(member.filename).parts)
-                l[0] = 'tools'
-                output = os.sep.join(l)
+        if zip_suffix == 'tar.gz':
+            response = requests.get(url, stream=True)
 
-                if member.is_dir():
-                    if not Path(output).is_dir():
-                        os.mkdir(output)
-                else:
-                    with open(output, "wb") as file:
-                        file.write(archive.read(member))
+            with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
+                for entry in tf:  # list each entry one by one
+                    file_obj = tf.extractfile(entry)
+                    print(entry.name)
+
+                    l = list(Path(entry.name).parts)
+                    l[0] = 'tools'
+                    output = os.sep.join(l)
+
+                    if entry.isdir():
+                        if not Path(output).is_dir():
+                            os.mkdir(output)
+                    if entry.isfile():
+                        with open(output, "wb") as file:
+                            file.write(file_obj.read())
+
+        else:
+            r = requests.get(url)
+            with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
+                for member in archive.infolist():
+                    l = list(Path(member.filename).parts)
+                    l[0] = 'tools'
+                    output = os.sep.join(l)
+
+                    if member.is_dir():
+                        if not Path(output).is_dir():
+                            os.mkdir(output)
+                    else:
+                        with open(output, "wb") as file:
+                            file.write(archive.read(member))
         return
 
     return {
         'basename': 'install-nodejs',
-        'targets': ['tools/npm'],
+        'targets': [NPM_TOOL],
         'actions': [(do_install,)],
         'verbosity': 2,
         'uptodate': [run_once],
