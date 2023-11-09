@@ -10,6 +10,7 @@ const color_palette = [mlx_electric_green, mlx_coral_red, mlx_gold_yellow, mlx_r
 
 var has_serial = false;
 var serial = null;
+var g_heat_map = 0;
 
 var accepted_ports = [
   {usbProductId: 33033, usbVendorId: 11914},
@@ -657,6 +658,12 @@ $(document).ready(function () {
           cols = 16;
           is_supported = true;
         }
+        if (connected_slaves[sa].device == "MLX90621")
+        {
+          rows = 16;
+          cols = 4;
+          is_supported = true;
+        }
         if (!is_supported)
         {
           console.log("data for not supported device found", connected_slaves[sa].device);
@@ -764,6 +771,21 @@ $(document).ready(function () {
           }
           img_data = img_data2;
         }
+        if (connected_slaves[sa].device == "MLX90621")
+        { // mirror by default one time 'extra' around the y axis
+          let img_data2 = ctx.createImageData(img_data.width, img_data.height);
+          for (let y=0; y<img_data2.height; y++)
+          {
+            for (let x=0; x<img_data2.width; x++)
+            {
+              img_data2.data[(y*img_data2.width+(img_data2.width-x-1))*4+0] = img_data.data[(y*img_data.width+x)*4+0];
+              img_data2.data[(y*img_data2.width+(img_data2.width-x-1))*4+1] = img_data.data[(y*img_data.width+x)*4+1];
+              img_data2.data[(y*img_data2.width+(img_data2.width-x-1))*4+2] = img_data.data[(y*img_data.width+x)*4+2];
+              img_data2.data[(y*img_data2.width+(img_data2.width-x-1))*4+3] = img_data.data[(y*img_data.width+x)*4+3];
+            }
+          }
+          img_data = img_data2;
+        }
         if (mirror == 'y')
         {
           let img_data2 = ctx.createImageData(img_data.width, img_data.height);
@@ -811,8 +833,13 @@ $(document).ready(function () {
           img_data = img_data2;
         }
 
-        let zoom_x = c.width / img_data.width;
+        let zoom_x = (c.width-g_heat_map) / img_data.width;
         let zoom_y = c.height / img_data.height;
+        if (g_heat_map < 0)
+        {
+          zoom_x = c.width / img_data.width;
+          zoom_y = (c.height+g_heat_map) / img_data.height;
+        }
 
         let zoom=Math.min(zoom_x, zoom_y);
 
@@ -1397,8 +1424,9 @@ function heat_map(t_min, t_max)
       gr.addColorStop(i / (keys.length-1), key);
     }
 
+    g_heat_map = +50;
     ctx.fillStyle = gr;
-    ctx.fillRect(c.width-50, 0, 50, c.height);
+    ctx.fillRect(c.width-g_heat_map, 0, g_heat_map, c.height);
 
     ctx.fillStyle = "white";
     ctx.font = "10px Courier New";
@@ -1417,8 +1445,9 @@ function heat_map(t_min, t_max)
       gr.addColorStop(i / (keys.length-1), key);
     }
 
+    g_heat_map = -20;
     ctx.fillStyle = gr;
-    ctx.fillRect(0, c.height-20, c.width, 20);
+    ctx.fillRect(0, c.height+g_heat_map, c.width, -g_heat_map);
 
     ctx.fillStyle = "white";
     ctx.font = "10px Courier New";
@@ -1447,48 +1476,3 @@ function heat_map(t_min, t_max)
     heat_map_gradient_colors = s.data;
   }
 }
-
-
-//<!--     <script src="./intel-hex.browser.js"></script> -->
-//    <!-- <script src="https://unpkg.com/nrf-intel-hex"></script> -->
-//
-//
-//
-//function concatTypedArrays(a, b) { // a, b TypedArray of same type
-//    var c = new (a.constructor)(a.length + b.length);
-//    c.set(a, 0);
-//    c.set(b, a.length);
-//    return c;
-//}
-//
-//function concatBytes(ui8a, byte) {
-//    var b = new Uint8Array(1);
-//    b[0] = byte;
-//    return concatTypedArrays(ui8a, b);
-//}
-//
-//
-//if (0)
-//{
-//  let stick_ee = "ee:3A:2400,10,01,0100,DATA,F15A,3480,0000,0000,0013,4443,AB23,7587,A729,0021,0000,FE05,F9B2,0058,E0B4,04AA,0000,0000,1900,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,AE0B,004A,F9B2,0058,E242,03CD,86DC,FD14,0D54,FDCD,2A00,2A00,5939,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,8F5F,B4C4,4000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0000,0006,001D,0002,12C0,0002,0960,AA91,1902,AA91,1902,2552,03A0,070B,820D,821D,FFFF,820D,821D,820D,821D,820D,821D,8201,BAE1,FFFF,8302,8310,8207,FFFF,8300,8312,830C,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF,FFFF";
-//  let tmp = stick_ee.split(":");
-//  let tmp2 = tmp.slice(0,2);
-//  tmp2 = tmp2.concat(tmp[2].split(","));
-//  let tmp3 = tmp2.map(item => parseInt(item, 16));
-//  let tmp4 = tmp3.slice(7);
-//  console.log(tmp4);
-//  let tmp5 = new Uint8Array(0);
-//  console.log(tmp5);
-//  for (let i = 0; i < tmp4.length; ++i) {
-//    const item = tmp4[i];
-//    tmp5 = concatBytes(tmp5, item&0x000FF);
-//    tmp5 = concatBytes(tmp5, (item&0x0FF00) >>> 8);
-//  }
-//  console.log(tmp5);
-//
-//  //const start_address = 0x4800;//parseInt(tmp3[2] * 2);
-//  //let memMap = new MemoryMap({0x4800: tmp5});
-//  //console.log(memMap.asHexString());
-//
-//}
-//
