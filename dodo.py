@@ -13,7 +13,7 @@ try:
     import doit
 except (Exception,) as e:
     print("Installing the doit python package.")
-    t = subprocess.check_output('pip install {} doit'.format(PIP_USER), text=True)
+    t = subprocess.check_output('pip install {} doit'.format(PIP_USER), text=True, shell=True, stderr=subprocess.STDOUT)
     print(t)
     print("\n\nPlease run this script again")
     print("Note: instead of 'python dodo.py', now you can use 'doit'")
