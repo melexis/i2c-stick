@@ -16,6 +16,18 @@ if sys.prefix != sys.base_prefix:  # check if we are in a virtual environment
 
 try:
     import doit
+    import shutil
+    import os
+    import yaml
+    import jinja2
+    import yamlinclude
+    from glob import glob
+    from pathlib import Path
+    import platform
+    import urllib.request
+    from html.parser import HTMLParser
+
+    from yamlinclude import YamlIncludeConstructor
 except (Exception,) as e:
     print("installing python packages from requirements.txt")
     t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER), text=True, stderr=subprocess.STDOUT, shell=True)

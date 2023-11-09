@@ -30,17 +30,11 @@ jobs:
         uses: actions/configure-pages@v2
       - name: Debug
         run: which pip
-#      - name: Install python requirements for web-interface
-#        run: pip install -r web-interface/requirements.txt
-#      - name: Install python requirements for i2c-stick-arduino
-#        run: pip install -r i2c-stick-arduino/requirements.txt
-#      - name: Build web-interface distribution
-#        run: cd web-interface && doit dist
-#      - name: Build i2c-stick-arduino distribution
-#        run: cd i2c-stick-arduino && doit dist
-      - name: Prep
-        run: python dodo.py dist
-      - name: Build all distribution (redundant)
+      - name: Install python requirements for web-interface
+        run: pip install -r web-interface/requirements.txt
+      - name: Install python requirements for i2c-stick-arduino
+        run: pip install -r i2c-stick-arduino/requirements.txt
+      - name: Build all distribution
         run: doit dist
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
