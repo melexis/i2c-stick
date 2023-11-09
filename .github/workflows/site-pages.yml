@@ -36,6 +36,8 @@ jobs:
 #        run: cd web-interface && doit dist
 #      - name: Build i2c-stick-arduino distribution
 #        run: cd i2c-stick-arduino && doit dist
+      - name: Install doit
+        run: python dodo.py list
       - name: Build all distribution (redundant)
         run: doit dist
       - name: Upload artifact
