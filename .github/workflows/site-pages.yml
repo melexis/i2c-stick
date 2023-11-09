@@ -33,9 +33,15 @@ jobs:
       - name: Install python requirements for i2c-stick-arduino
         run: pip install -r i2c-stick-arduino/requirements.txt
       - name: Build distribution
-        run: cd i2c-stick-arduino && doit dist
+        run: cd web-interface && doit install-pandoc
+      - name: Build distribution
+        run: ls -al web-interface/tools
+      - name: Build distribution
+        run: web-interface/tools/pandoc --version
       - name: Build distribution
         run: cd web-interface && doit dist
+      - name: Build distribution
+        run: cd i2c-stick-arduino && doit dist
       - name: Build distribution
         run: doit dist
       - name: Upload artifact
