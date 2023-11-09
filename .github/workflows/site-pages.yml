@@ -28,8 +28,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Setup Pages
         uses: actions/configure-pages@v2
-      - name: Debug
-        run: which pip
       - name: Install python requirements for web-interface
         run: pip install -r web-interface/requirements.txt
       - name: Install python requirements for i2c-stick-arduino
