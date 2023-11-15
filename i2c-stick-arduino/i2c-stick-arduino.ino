@@ -200,17 +200,18 @@ hal_i2c_direct_read(uint8_t sa, uint8_t *read_buffer, uint16_t read_n_bytes)
   WIRE.endTransmission();
   delayMicroseconds(5);
 
-  WIRE.beginTransmission((uint8_t)sa);
   WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
-  for (uint16_t i=0; i<read_n_bytes; i++)
+
+  uint8_t bytes_available = WIRE.available();
+  if (bytes_available >= read_n_bytes)
   {
-    read_buffer[i] = (uint8_t)WIRE.read();
+    for (uint16_t i=0; i<read_n_bytes; i++)
+    {
+      read_buffer[i] = (uint8_t)WIRE.read();
+    }
+    return 0;
   }
-  byte result = WIRE.endTransmission();     // stop transmitting
-#ifdef ARDUINO_ARCH_RP2040
-  if (result == 4) result = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
-#endif
-  return result;
+  return 1;
 }
 
 
