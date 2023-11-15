@@ -4,6 +4,7 @@ board_manager:
   additional-urls:
   - https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
   - https://www.pjrc.com/teensy/package_teensy_index.json
+  - https://espressif.github.io/arduino-esp32/package_esp32_dev_index.json
 boards:
 - fqbn: rp2040:rp2040:adafruit_trinkeyrp2040qt
   name: Adafruit Trinkey RP2040 QT
@@ -22,6 +23,14 @@ boards:
   port_discovery_method: arduino-cli
   USB_PID: 0x0483
   USB_VID: 0x16C0
+- fqbn: esp32:esp32:sparkfun_esp32c6_qwiic_pocket
+  name: Sparkfun ESP32-C6 QWIIC pocket
+  nick: sf-esp32-c6
+  core: esp32:esp32
+  bin_extension: bin
+  url: https://www.sparkfun.com/products/22925
+  USB_PID: 0x1001
+  USB_VID: 0x303A
 
 drivers:
 - function_id: '90614'
