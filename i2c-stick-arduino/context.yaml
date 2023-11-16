@@ -49,7 +49,3 @@ drivers:
   id: 4
   name: MLX90632
   scr_name: mlx90632
-- function_id: '90621'
-  id: 5
-  name: MLX90621
-  scr_name: mlx90621
