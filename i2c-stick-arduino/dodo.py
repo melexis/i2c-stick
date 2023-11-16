@@ -355,13 +355,11 @@ def task_arduino_compile():
             if parameters != "":
                 fqbn += ":" + parameters
         extra_flags = ""
-        if 'extra_defines' in board:
-            for k, v in board['extra_defines'].items():
-                if type(v) is str:
-                    v = '"' + v + '"'
-                flag = "compiler.cpp.extra_flags=\"-D{}={}\"".format(k, v)
-                flag = flag.replace('"', '\\"')
-                extra_flags += '--build-property "{}" '.format(flag)
+        extra_flags_list = []
+        if 'extra_flags' in board:
+            extra_flags_list = extra_flags_list + board['extra_flags']
+        if len(extra_flags_list) > 0:
+            extra_flags = '--build-property "compiler.cpp.extra_flags={}"'.format(" ".join(extra_flags_list))
         result = dep_manager.get_result("{}:{}".format("arduino-compile", board['nick']))
         clean_flag = ""
         if type(result) is dict:
