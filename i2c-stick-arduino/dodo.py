@@ -517,7 +517,7 @@ def task_generate():
         yield {
             'name': output_file.name,
             'actions': [(do_generate, [jinja2_file.name, output_file.name])],
-            'file_dep': [jinja2_file.name],
+            'file_dep': [jinja2_file.name] + list(glob('*.yaml')),
             'task_dep': ['pip:requirements.txt'],
             'targets': [output_file.name],
             'title': show_cmd,
