@@ -404,7 +404,7 @@ void msc_flush_cb (void)
 void
 handle_applications()
 {
-  uint8_t channel_mask = 0xFF;
+  //uint8_t channel_mask = 0xFF;
 }
 
 uint16_t

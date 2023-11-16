@@ -27,10 +27,8 @@ except (Exception,) as e:
     print("installing python packages from requirements.txt")
     t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER), text=True, shell=True, stderr=subprocess.STDOUT)
     print(t)
-    print("\n\nPlease run this script again")
     print("Note: instead of 'python dodo.py', now you can use 'doit'")
     print("Note: use 'doit list' for a list of commands.")
-    exit(0)
 
 import shutil
 import os
@@ -44,8 +42,32 @@ from doit.action import CmdAction
 from doit.tools import run_once
 import platform
 
+this_dir = os.path.dirname(os.path.abspath(__file__))
+yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
+
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
+
+for driver in context['drivers']:
+    if 'disable' not in driver:
+        driver['disable'] = 0
+
+for driver in context['drivers']:
+    if driver['disable']:
+        files = list(Path(".").glob(driver['scr_name'] + "_*.cpp")) + list(Path(".").glob(driver['scr_name'] + "_*.h"))
+        for file in files:
+            shutil.move(file, str(file) + ".disable")
+
+for driver in context['drivers']:
+    if driver['disable'] == 0:
+        files = list(Path(".").glob(driver['scr_name'] + "_*.disable"))
+        for file in files:
+            shutil.move(file, str(file).replace(".disable", ""))
+
+context['drivers'] = [driver for driver in context['drivers'] if driver['disable'] == 0]
+
+for index, driver in enumerate(context['drivers']):
+    driver['id'] = index + 1
 
 arduino_add_url = " ".join(["--additional-urls {}".format(x) for x in context['board_manager']['additional-urls']])
 
@@ -355,11 +377,13 @@ def task_arduino_compile():
             if parameters != "":
                 fqbn += ":" + parameters
         extra_flags = ""
-        extra_flags_list = []
-        if 'extra_flags' in board:
-            extra_flags_list = extra_flags_list + board['extra_flags']
-        if len(extra_flags_list) > 0:
-            extra_flags = '--build-property "compiler.cpp.extra_flags={}"'.format(" ".join(extra_flags_list))
+        if 'extra_defines' in board:
+            for k, v in board['extra_defines'].items():
+                if type(v) is str:
+                    v = '"' + v + '"'
+                flag = "compiler.cpp.extra_flags=\"-D{}={}\"".format(k, v)
+                flag = flag.replace('"', '\\"')
+                extra_flags += '--build-property "{}" '.format(flag)
         result = dep_manager.get_result("{}:{}".format("arduino-compile", board['nick']))
         clean_flag = ""
         if type(result) is dict:

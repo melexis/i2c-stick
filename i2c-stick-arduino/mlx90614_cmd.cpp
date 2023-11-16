@@ -215,7 +215,7 @@ cmd_90614_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **
   }
   ir_data2 = data;
   if (data & 0x8000) ir_data2 = -(data & ~0x8000);
-  raw_list[2] = (uint16_t)(ir_data1);
+  raw_list[2] = (uint16_t)(ir_data2);
 }
 
 
@@ -625,7 +625,7 @@ cmd_90614_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
     *is_ok = 0;
     return;
   }
-  if (value & 0x007F != sa)
+  if ((value & 0x007F) != sa)
   {
     *is_ok = 0;
   }

@@ -1,5 +1,4 @@
 ino: i2c-stick-arduino
-version: V1.2.90
 board_manager:
   additional-urls:
   - https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
@@ -32,24 +31,7 @@ boards:
   USB_PID: 0x1001
   USB_VID: 0x303A
 
-drivers:
-- function_id: '90614'
-  id: 1
-  name: MLX90614
-  scr_name: mlx90614
-- function_id: '90640'
-  id: 2
-  name: MLX90640
-  scr_name: mlx90640
-- function_id: '90641'
-  id: 3
-  name: MLX90641
-  scr_name: mlx90641
-- function_id: '90632'
-  id: 4
-  name: MLX90632
-  scr_name: mlx90632
-- function_id: '90621'
-  id: 5
-  name: MLX90621
-  scr_name: mlx90621
+drivers: !include '*_driver.yaml'
+
+
+applications: !include '*_application.yaml'
