@@ -110,7 +110,7 @@ int MLX90621_I2CRead(uint8_t slaveAddr,uint8_t command, uint8_t startAddress, ui
         uint16_t low_byte = WIRE.read();
         uint16_t high_byte = WIRE.read();
         *p = (low_byte | (high_byte << 8));
-        *p++;
+        p++;
       }
       ack = WIRE.endTransmission();     // stop transmitting
 #ifdef ARDUINO_ARCH_RP2040  

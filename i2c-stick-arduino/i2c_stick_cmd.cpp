@@ -153,7 +153,7 @@ char *my_dtostrf( float val,  int8_t char_num, uint8_t precision, char *chr_buff
   int       i, j ;
   float     r_val;
   long      i_val;
-  char      c, c_sign;
+  char      c_sign;
 
 
   // check the sign
@@ -1760,7 +1760,6 @@ cmd_ch_write(uint8_t channel_mask, const char *input)
   if (!strncmp(var_name, input, strlen(var_name)))
   {
     const char *p = input+strlen(var_name);
-    uint16_t value = 0;
     uint8_t valid = true;
 
     uint8_t do_remove = false;

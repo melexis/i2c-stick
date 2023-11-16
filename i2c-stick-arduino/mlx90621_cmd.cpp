@@ -801,7 +801,6 @@ cmd_90621_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start_address, uint16_
 void
 cmd_90621_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
 { // function to call prior any init, only to check is the connected slave IS a MLX90614.
-  uint16_t value;
   *is_ok = 1; // be optimistic!
 
   uint8_t eeMLX90621[256];

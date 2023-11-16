@@ -27,10 +27,8 @@ except (Exception,) as e:
     print("installing python packages from requirements.txt")
     t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER), text=True, shell=True, stderr=subprocess.STDOUT)
     print(t)
-    print("\n\nPlease run this script again")
     print("Note: instead of 'python dodo.py', now you can use 'doit'")
     print("Note: use 'doit list' for a list of commands.")
-    exit(0)
 
 import shutil
 import os
