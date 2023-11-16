@@ -8,10 +8,9 @@
 
 // Include all the drivers cmd header files:
 #include "mlx90614_cmd.h"
+#include "mlx90632_cmd.h"
 #include "mlx90640_cmd.h"
 #include "mlx90641_cmd.h"
-#include "mlx90632_cmd.h"
-#include "mlx90621_cmd.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -21,10 +20,9 @@ i2c_stick_register_all_drivers()
 {
   int16_t result = 1;
   if (cmd_90614_register_driver() < 0) result = -1;
+  if (cmd_90632_register_driver() < 0) result = -1;
   if (cmd_90640_register_driver() < 0) result = -1;
   if (cmd_90641_register_driver() < 0) result = -1;
-  if (cmd_90632_register_driver() < 0) result = -1;
-  if (cmd_90621_register_driver() < 0) result = -1;
   return result;
 }
 
@@ -36,14 +34,12 @@ i2c_stick_get_drv_name_by_drv(uint8_t drv)
   {
     case DRV_MLX90614_ID:
       return DRV_MLX90614_NAME;
+    case DRV_MLX90632_ID:
+      return DRV_MLX90632_NAME;
     case DRV_MLX90640_ID:
       return DRV_MLX90640_NAME;
     case DRV_MLX90641_ID:
       return DRV_MLX90641_NAME;
-    case DRV_MLX90632_ID:
-      return DRV_MLX90632_NAME;
-    case DRV_MLX90621_ID:
-      return DRV_MLX90621_NAME;
     default:
       if (0) {}
   }
@@ -55,10 +51,9 @@ uint8_t
 i2c_stick_get_drv_by_drv_name(const char *drv_name)
 {
   if (!strcasecmp(drv_name, DRV_MLX90614_NAME)) return DRV_MLX90614_ID;
+  if (!strcasecmp(drv_name, DRV_MLX90632_NAME)) return DRV_MLX90632_ID;
   if (!strcasecmp(drv_name, DRV_MLX90640_NAME)) return DRV_MLX90640_ID;
   if (!strcasecmp(drv_name, DRV_MLX90641_NAME)) return DRV_MLX90641_ID;
-  if (!strcasecmp(drv_name, DRV_MLX90632_NAME)) return DRV_MLX90632_ID;
-  if (!strcasecmp(drv_name, DRV_MLX90621_NAME)) return DRV_MLX90621_ID;
   return 0;
 }
 
@@ -80,17 +75,14 @@ cmd_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_messag
     case DRV_MLX90614_ID:
       cmd_90614_mv(sa, mv_list, mv_count, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_mv(sa, mv_list, mv_count, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_mv(sa, mv_list, mv_count, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_mv(sa, mv_list, mv_count, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_mv(sa, mv_list, mv_count, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_mv(sa, mv_list, mv_count, error_message);
       break;
     default:
       return 0;
@@ -113,17 +105,14 @@ cmd_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_
     case DRV_MLX90614_ID:
       cmd_90614_raw(sa, raw_list, raw_count, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_raw(sa, raw_list, raw_count, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_raw(sa, raw_list, raw_count, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_raw(sa, raw_list, raw_count, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_raw(sa, raw_list, raw_count, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_raw(sa, raw_list, raw_count, error_message);
       break;
     default:
       return 0;
@@ -146,17 +135,14 @@ cmd_nd(uint8_t sa, uint8_t *nd, char const **error_message)
     case DRV_MLX90614_ID:
       cmd_90614_nd(sa, nd, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_nd(sa, nd, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_nd(sa, nd, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_nd(sa, nd, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_nd(sa, nd, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_nd(sa, nd, error_message);
       break;
     default:
       return 0;
@@ -179,17 +165,14 @@ cmd_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **error_mes
     case DRV_MLX90614_ID:
       cmd_90614_sn(sa, sn_list, sn_count, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_sn(sa, sn_list, sn_count, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_sn(sa, sn_list, sn_count, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_sn(sa, sn_list, sn_count, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_sn(sa, sn_list, sn_count, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_sn(sa, sn_list, sn_count, error_message);
       break;
     default:
       *sn_count = 0;
@@ -223,17 +206,14 @@ cmd_cs(uint8_t sa, uint8_t channel_mask, const char *input)
     case DRV_MLX90614_ID:
       cmd_90614_cs(sa, channel_mask, input);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_cs(sa, channel_mask, input);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_cs(sa, channel_mask, input);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_cs(sa, channel_mask, input);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_cs(sa, channel_mask, input);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_cs(sa, channel_mask, input);
       break;
     default:
       return 0;
@@ -289,17 +269,14 @@ cmd_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
     case DRV_MLX90614_ID:
       cmd_90614_cs_write(sa, channel_mask, input);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_cs_write(sa, channel_mask, input);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_cs_write(sa, channel_mask, input);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_cs_write(sa, channel_mask, input);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_cs_write(sa, channel_mask, input);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_cs_write(sa, channel_mask, input);
       break;
     default:
       return 0;
@@ -322,17 +299,14 @@ cmd_mr(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
     case DRV_MLX90614_ID:
       cmd_90614_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
     default:
       return 0;
@@ -356,17 +330,14 @@ cmd_mw(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
     case DRV_MLX90614_ID:
       cmd_90614_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
     default:
       return 0;
@@ -390,17 +361,14 @@ cmd_is(uint8_t sa, uint8_t drv, uint8_t *is_ok, char const **error_message)
     case DRV_MLX90614_ID:
       cmd_90614_is(sa, is_ok, error_message);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_is(sa, is_ok, error_message);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_is(sa, is_ok, error_message);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_is(sa, is_ok, error_message);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_is(sa, is_ok, error_message);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_is(sa, is_ok, error_message);
       break;
     default:
       return 0;
@@ -433,17 +401,14 @@ cmd_tear_down(uint8_t sa)
     case DRV_MLX90614_ID:
       cmd_90614_tear_down(sa);
       break;
+    case DRV_MLX90632_ID:
+      cmd_90632_tear_down(sa);
+      break;
     case DRV_MLX90640_ID:
       cmd_90640_tear_down(sa);
       break;
     case DRV_MLX90641_ID:
       cmd_90641_tear_down(sa);
-      break;
-    case DRV_MLX90632_ID:
-      cmd_90632_tear_down(sa);
-      break;
-    case DRV_MLX90621_ID:
-      cmd_90621_tear_down(sa);
       break;
     default:
       return 0;

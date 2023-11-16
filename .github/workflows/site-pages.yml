@@ -34,10 +34,6 @@ jobs:
         run: pip install -r i2c-stick-arduino/requirements.txt
       - name: Build all distribution
         run: doit dist
-      - name: debug
-        run: pwd
-      - name: debug
-        run: cat i2c-stick-arduino/i2c_stick_dispatcher.h
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:

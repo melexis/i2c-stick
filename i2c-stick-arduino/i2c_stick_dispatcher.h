@@ -14,14 +14,12 @@ extern "C" {
 // driver declarations:
 #define DRV_MLX90614_ID 1
 #define DRV_MLX90614_NAME "MLX90614"
-#define DRV_MLX90640_ID 2
-#define DRV_MLX90640_NAME "MLX90640"
-#define DRV_MLX90641_ID 3
-#define DRV_MLX90641_NAME "MLX90641"
-#define DRV_MLX90632_ID 4
+#define DRV_MLX90632_ID 2
 #define DRV_MLX90632_NAME "MLX90632"
-#define DRV_MLX90621_ID 5
-#define DRV_MLX90621_NAME "MLX90621"
+#define DRV_MLX90640_ID 3
+#define DRV_MLX90640_NAME "MLX90640"
+#define DRV_MLX90641_ID 4
+#define DRV_MLX90641_NAME "MLX90641"
 
 int16_t i2c_stick_register_all_drivers();
 const char* i2c_stick_get_drv_name_by_drv(uint8_t drv);
