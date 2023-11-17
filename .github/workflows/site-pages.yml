@@ -34,6 +34,17 @@ jobs:
         run: pip install -r i2c-stick-arduino/requirements.txt
       - name: Build all distribution
         run: doit dist
+      - name: Kitchen
+        run: |
+          cp -vrf dist i2c-stick-${{ github.ref_name }}
+          zip -r i2c-stick-${{ github.ref_name }}.zip i2c-stick-${{ github.ref_name }}
+      - name: Publish to release tag
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            readme.md
+            i2c-stick-${{ github.ref_name }}.zip
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
