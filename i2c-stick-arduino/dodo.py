@@ -40,6 +40,7 @@ from pathlib import Path
 import serial.tools.list_ports
 from doit.action import CmdAction
 from doit.tools import run_once
+from doit.tools import config_changed
 import platform
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,7 +72,7 @@ for index, driver in enumerate(context['drivers']):
 
 arduino_add_url = " ".join(["--additional-urls {}".format(x) for x in context['board_manager']['additional-urls']])
 
-ARDUINO_CLI = os.path.join('tools', 'arduino-cli'+Path(sys.executable).suffix)
+ARDUINO_CLI = os.path.join('tools', 'arduino-cli' + Path(sys.executable).suffix)
 
 
 def str_presenter(dumper, data):
@@ -147,7 +148,7 @@ def task_arduino_install_cli():
             'darwin': 'macOS',
         }
         bits = '32bit'
-        if sys.maxsize > 2**32:
+        if sys.maxsize > 2 ** 32:
             bits = '64bit'
         zip_suffix = 'tar.gz'
         if system == 'windows':
@@ -164,22 +165,22 @@ def task_arduino_install_cli():
 
         if zip_suffix == 'tar.gz':
             response = requests.get(url, stream=True)
-            file = tarfile.open(fileobj=response.raw, mode="r|gz")
-            file.extractall(path="tools")
+            tar_file = tarfile.open(fileobj=response.raw, mode="r|gz")
+            tar_file.extractall(path="tools")
         else:
             r = requests.get(url)
             with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
                 for member in archive.infolist():
                     if member.filename == Path(task.targets[0]).name:
                         print("file: {}".format(member.filename))
-                        with open(task.targets[0], "wb") as file:
-                            file.write(archive.read(member))
+                        with open(task.targets[0], "wb") as target_file:
+                            target_file.write(archive.read(member))
 
         return
 
     return {
         'basename': 'arduino-install-cli',
-        'actions': [(do_install, )],
+        'actions': [(do_install,)],
         'verbosity': 2,
         'targets': [ARDUINO_CLI],
         'uptodate': [run_once],
@@ -246,7 +247,7 @@ def task_arduino_lib_update_index():
         'uptodate': [run_once],
         'task_dep': ['arduino-install-cli'],
         'title': show_cmd,
-        }
+    }
 
 
 def task_arduino_install_libs():
@@ -351,8 +352,8 @@ def task_arduino_board_details():
             'verbosity': 2,
             'actions': ["{} board details --fqbn {}".format(ARDUINO_CLI, fqbn)],
             'task_dep': ['arduino-install-cli',
-                         'arduino-install-core:'+board['core'],
-                        ],
+                         'arduino-install-core:' + board['core'],
+                         ],
             'uptodate': [False],  # force to run the task always
             'title': show_cmd,
         }
@@ -398,15 +399,16 @@ def task_arduino_compile():
             'basename': 'arduino-compile',
             'name': board['nick'],
             'actions': ["{} compile --fqbn {} {} {}.ino -e {}".format(
-                    ARDUINO_CLI, fqbn, extra_flags, context['ino'], clean_flag),
-                        (store, [fqbn, extra_flags]),
-                        ],
+                ARDUINO_CLI, fqbn, extra_flags, context['ino'], clean_flag),
+                (store, [fqbn, extra_flags]),
+            ],
             'task_dep': ['arduino-install-cli',
-                         'arduino-install-core:'+board['core'],
+                         'arduino-install-core:' + board['core'],
                          'arduino-install-libs',
+                         'copy-plugins',
                          'generate:i2c_stick_dispatcher.h',
                          'generate:i2c_stick_dispatcher.cpp',
-                        ],
+                         ],
             'title': show_cmd,
             'file_dep': [CONTEXT_FILE,
                          '{}.ino'.format(context['ino']),
@@ -414,7 +416,7 @@ def task_arduino_compile():
                          'i2c_stick_dispatcher.cpp',
                          ] + headers + cpp_files,
             'targets': ['build/{}/{}.ino.{}'.format(
-                            board['fqbn'].replace(":", "."), context['ino'], board['bin_extension'])],
+                board['fqbn'].replace(":", "."), context['ino'], board['bin_extension'])],
         }
 
 
@@ -427,7 +429,7 @@ def task_arduino_upload():
             if 'port_discovery_method' in board_cfg:
                 method = board_cfg['port_discovery_method']
 
-            if method == 'vid_pid': # special case for teensy
+            if method == 'vid_pid':  # special case for teensy
                 filtered_ports = []
                 pid = None
                 vid = None
@@ -495,7 +497,6 @@ def task_generate():
     """Generate file using context.yaml and jinja2 template files"""
 
     def do_generate(template, output):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
         yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
         loader = jinja2.FileSystemLoader(this_dir)
 
@@ -508,6 +509,7 @@ def task_generate():
 
         with open(output, 'w') as output_f:
             output_f.write(jinja_t.render(context))
+        return context
 
     working_directory = Path('.')
     for jinja2_file in working_directory.glob('*.jinja2'):
@@ -520,14 +522,47 @@ def task_generate():
             'file_dep': [jinja2_file.name] + list(glob('*.yaml')),
             'task_dep': ['pip:requirements.txt'],
             'targets': [output_file.name],
+            'uptodate': [config_changed(context)],
             'title': show_cmd,
         }
 
 
+def task_copy_plugins():
+    """ Copy the plugin's arduino source files to this arduino directory """
+    def do_copy(task):
+        # print(task.file_dep)
+        with open("../.git/info/exclude", "r") as ge:
+            git_exclude = [x.strip() for x in ge.readlines()]
+
+        for src in task.file_dep:
+            destination = Path(src).name
+            if ("i2c-stick-arduino/" + destination) not in git_exclude:
+                git_exclude.append("i2c-stick-arduino/" + destination)
+                with open("../.git/info/exclude", "w") as ge:
+                    ge.write('\n'.join(git_exclude))
+
+            must_copy = 0
+            if os.path.isfile(destination):
+                if os.stat(src).st_mtime - os.stat(destination).st_mtime > 1:
+                    must_copy = 1  # when older!
+            else:
+                must_copy = 1  # when new file!
+            if must_copy:
+                print(f"copy plugin file: {src} => {destination}")
+                shutil.copy2(src, destination)
+
+    return {
+        'basename': 'copy-plugins',
+        'actions': [do_copy],
+        'file_dep': list(glob('../plugins/*/i2c-stick-arduino/*')),
+        'verbosity': 2,
+    }
+
+
 def task_add_driver():
-    """Add a templated entry for a new sensor to the framework"""
+    """Add a templated entry for a new driver for a sensor to the framework"""
+
     def do_generate(template, output, data):
-        this_dir = os.path.dirname(os.path.abspath(__file__))
         yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
         loader = jinja2.FileSystemLoader(this_dir)
 
@@ -536,10 +571,10 @@ def task_add_driver():
             autoescape=jinja2.select_autoescape()
         )
 
-        t = env.get_template(template)
+        tpl = env.get_template(template)
         print("output:", output)
         with open(output, 'w') as output_f:
-            output_f.write(t.render(data))
+            output_f.write(tpl.render(data))
             output_f.write("\n")
 
     def do_add_driver(driver, src_name, function_id, sa_list):
@@ -561,38 +596,38 @@ def task_add_driver():
             print("Run 'doit info add-driver' for more information")
             return
 
-        driver_data = { 'driver': {
-                'name': driver,
-                'src_name': src_name,
-                'function_id': function_id,
-                'sa_list': sa_list,
+        driver_data = {'driver': {
+            'name': driver,
+            'src_name': src_name,
+            'function_id': function_id,
+            'sa_list': sa_list,
             },
         }
 
-        driver_ids = [x['id'] for x in context['drivers']]
-        for drv in context['drivers']:
-            if drv['name'] == driver:
-                print("ERROR: Driver '{}' already exists; edit the file 'context.yaml' manually to resolve this issue".format(driver))
+        for d in context['drivers']:
+            if d['name'] == driver:
+                print("ERROR: Driver '{}' already exists;".format(driver) +
+                      " edit the file 'context.yaml' manually to resolve this issue")
                 return
 
         do_generate("driver_cmd.h.jinja2", "{}_cmd.h".format(src_name), driver_data)
         do_generate("driver_cmd.cpp.jinja2", "{}_cmd.cpp".format(src_name), driver_data)
         # now update the context.yaml file!
 
-        context['drivers'].append({
-            'id': max(driver_ids)+1,
-            'name': driver,
-            'scr_name': src_name,
-            'function_id': function_id,
-        })
-        with open(CONTEXT_FILE, 'w') as output_f:
-            output_f.write(yaml.dump(context))
+        yaml_file = src_name+"_driver.yaml"
+        print("output:", yaml_file)
+        with open(yaml_file, 'w') as output_f:
+            output_f.write(yaml.dump({
+                'name': driver,
+                'scr_name': src_name,
+                'function_id': function_id,
+            }))
             output_f.write("\n")
 
         # and finally re-generate the dispatcher for the newly added driver.
-        from doit.doit_cmd import DoitMain
-        DoitMain().run(["--always", "generate:i2c_stick_dispatcher.h"])
-        DoitMain().run(["--always", "generate:i2c_stick_dispatcher.cpp"])
+        # from doit.doit_cmd import DoitMain
+        # DoitMain().run(["--always", "generate:i2c_stick_dispatcher.h"])
+        # DoitMain().run(["--always", "generate:i2c_stick_dispatcher.cpp"])
 
     return {
         'basename': 'add-driver',

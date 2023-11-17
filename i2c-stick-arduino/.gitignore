@@ -1,0 +1,8 @@
+*.bak
+.doit.db*
+__pycache__
+package
+driver_cmd.h
+driver_cmd.cpp
+firmware_list.md
+tools
