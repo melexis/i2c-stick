@@ -26,7 +26,8 @@ try:
     from yamlinclude import YamlIncludeConstructor
 except (Exception,) as e:
     print("installing python packages from requirements.txt")
-    t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER), text=True, stderr=subprocess.STDOUT, shell=True)
+    t = subprocess.check_output('pip install {} -r requirements.txt'.format(PIP_USER),
+                                text=True, stderr=subprocess.STDOUT, shell=True)
     print(t)
     print("\n\nPlease run this script again")
     print("Note: instead of 'python dodo.py', now you can use 'doit'")
@@ -45,7 +46,6 @@ from doit.tools import run_once
 import platform
 import urllib.request
 from html.parser import HTMLParser
-from doit import create_after
 
 from yamlinclude import YamlIncludeConstructor
 
@@ -68,35 +68,20 @@ if platform.system().lower() == 'windows':
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
 
-for driver in context['drivers']:
+for driver in context['arduino']['drivers']:
+    print("driver:", driver)
     if 'disable' not in driver:
         driver['disable'] = 0
 
-# Arduino compiles all cpp files in the directory; rename to <ori>.disable
-for driver in context['drivers']:
-    if driver['disable']:
-        files = list(Path(".").glob(driver['scr_name'] + "_*.cpp")) + list(Path(".").glob(driver['scr_name'] + "_*.h"))
-        for file in files:
-            shutil.move(file, str(file) + ".disable")
-
-# undo: Arduino compiles all cpp files in the directory; rename to <ori>.disable
-for driver in context['drivers']:
-    if driver['disable'] == 0:
-        files = list(Path(".").glob(driver['scr_name'] + "_*.disable"))
-        for file in files:
-            shutil.move(file, str(file).replace(".disable", ""))
-
 # remove the disabled drivers
-context['drivers'] = [driver for driver in context['drivers'] if driver['disable'] == 0]
+context['arduino']['drivers'] = [driver for driver in context['arduino']['drivers'] if driver['disable'] == 0]
 
 # remove the disabled boards
-for board in context['boards']:
+for board in context['arduino']['boards']:
     if 'disable' not in board:
         board['disable'] = 0
 
-context['boards'] = [board for board in context['boards'] if board['disable'] == 0]
-
-
+context['arduino']['boards'] = [board for board in context['arduino']['boards'] if board['disable'] == 0]
 
 
 def str_presenter(dumper, data):
@@ -233,9 +218,9 @@ def task_install_nodejs():
 
             with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
                 for entry in tf:  # list each entry one by one
-                    l = list(Path(entry.name).parts)
-                    l[0] = 'tools'
-                    output = os.sep.join(l)
+                    parts = list(Path(entry.name).parts)
+                    parts[0] = 'tools'
+                    output = os.sep.join(parts)
 
                     if entry.isdir():
                         if not Path(output).is_dir():
@@ -249,9 +234,9 @@ def task_install_nodejs():
             r = requests.get(url)
             with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
                 for member in archive.infolist():
-                    l = list(Path(member.filename).parts)
-                    l[0] = 'tools'
-                    output = os.sep.join(l)
+                    parts = list(Path(member.filename).parts)
+                    parts[0] = 'tools'
+                    output = os.sep.join(parts)
 
                     if member.is_dir():
                         if not Path(output).is_dir():
@@ -316,15 +301,15 @@ def task_install_pandoc():
 
             with tarfile.open(fileobj=response.raw, mode="r|gz") as tf:
                 for entry in tf:  # list each entry one by one
-                    l = list(Path(entry.name).parts)
-                    l[0] = 'tools'
-                    if len(l) > 1:
-                        if l[1] == 'bin':
-                            del l[1]
-                    if len(l) > 1:
-                        if not l[1].startswith('pandoc'):
+                    parts = list(Path(entry.name).parts)
+                    parts[0] = 'tools'
+                    if len(parts) > 1:
+                        if parts[1] == 'bin':
+                            del parts[1]
+                    if len(parts) > 1:
+                        if not parts[1].startswith('pandoc'):
                             continue
-                    output = os.sep.join(l)
+                    output = os.sep.join(parts)
 
                     if entry.isdir():
                         if not Path(output).is_dir():
@@ -338,14 +323,14 @@ def task_install_pandoc():
             r = requests.get(url)
             with closing(r), zipfile.ZipFile(io.BytesIO(r.content)) as archive:
                 for member in archive.infolist():
-                    l = list(Path(member.filename).parts)
-                    l[0] = 'tools'
-                    if len(l) > 1:
-                        if l[1] == 'bin':
-                            del l[1]
-                        if not l[1].startswith('pandoc'):
+                    parts = list(Path(member.filename).parts)
+                    parts[0] = 'tools'
+                    if len(parts) > 1:
+                        if parts[1] == 'bin':
+                            del parts[1]
+                        if not parts[1].startswith('pandoc'):
                             continue
-                    output = os.sep.join(l)
+                    output = os.sep.join(parts)
                     if member.is_dir():
                         if not Path(output).is_dir():
                             os.mkdir(output)
@@ -468,12 +453,13 @@ def task_convert_md():
 
     for md_file in md_files:
         html_file = md_file.with_suffix("").with_suffix(".html")
+        md_options = "markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax"
         yield {
             'basename': 'convert-md',
             'name': html_file,
             'actions': [
-                "{} {} -f markdown+lists_without_preceding_blankline+autolink_bare_uris+hard_line_breaks+smart --mathjax -o {}".format(
-                    PANDOC, md_file, html_file), ],
+                "{} {} -f {} -o {}".format(
+                    PANDOC, md_file, md_options, html_file), ],
             'file_dep': [md_file],
             'task_dep': ['pip:requirements.txt', 'install-pandoc'],
             'targets': [html_file],

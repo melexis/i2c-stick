@@ -6,5 +6,5 @@ versioning:
 
 arduino: !include ../i2c-stick-arduino/context.yaml
 
-drivers:
+interfaces:
   - !include mlx90632_interface.yml
