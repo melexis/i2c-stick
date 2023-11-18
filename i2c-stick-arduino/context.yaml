@@ -14,6 +14,7 @@ boards:
   USB_PID: 0x8109
   USB_VID: 0x239A
 - fqbn: teensy:avr:teensy41
+  disable: 1
   name: Teensy 4.1
   nick: teensy41
   core: teensy:avr
@@ -23,6 +24,7 @@ boards:
   USB_PID: 0x0483
   USB_VID: 0x16C0
 - fqbn: esp32:esp32:sparkfun_esp32c6_qwiic_pocket
+  disable: 1
   name: Sparkfun ESP32-C6 QWIIC pocket
   nick: sf-esp32-c6
   core: esp32:esp32
@@ -32,6 +34,5 @@ boards:
   USB_VID: 0x303A
 
 drivers: !include '*_driver.yaml'
-
 
 applications: !include '*_application.yaml'
