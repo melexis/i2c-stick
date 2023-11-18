@@ -215,7 +215,7 @@ cmd_90614_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **
   }
   ir_data2 = data;
   if (data & 0x8000) ir_data2 = -(data & ~0x8000);
-  raw_list[2] = (uint16_t)(ir_data1);
+  raw_list[2] = (uint16_t)(ir_data2);
 }
 
 
@@ -335,21 +335,21 @@ cmd_90614_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":FIR=", 0);
-  uint8_to_hex(buf, fir);
+  itoa(fir, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":IIR=", 0);
-  uint8_to_hex(buf, iir);
+  itoa(iir, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":ND=", 0);
-  uint32_to_dec(buf, mlx->nd_timer_, 8);
+  itoa(mlx->nd_timer_, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
@@ -625,7 +625,7 @@ cmd_90614_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
     *is_ok = 0;
     return;
   }
-  if (value & 0x007F != sa)
+  if ((value & 0x007F) != sa)
   {
     *is_ok = 0;
   }

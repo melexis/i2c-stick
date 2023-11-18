@@ -130,11 +130,33 @@ hal_get_board_info()
   return BOARD_INFO;
 }
 
+void
+hal_write_pin(uint8_t pin, uint8_t state)
+{
+  pinMode(pin, OUTPUT);
+  digitalWrite(pin, state ? 1 : 0);
+}
+
+
+uint8_t
+hal_read_pin(uint8_t pin)
+{
+  pinMode(pin, INPUT);
+  return digitalRead(pin);
+}
+
 
 uint64_t
 hal_get_millis()
 {
   return millis();
+}
+
+
+void
+hal_delay(uint32_t ms)
+{
+  delay(ms);
 }
 
 
@@ -178,17 +200,18 @@ hal_i2c_direct_read(uint8_t sa, uint8_t *read_buffer, uint16_t read_n_bytes)
   WIRE.endTransmission();
   delayMicroseconds(5);
 
-  WIRE.beginTransmission((uint8_t)sa);
   WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
-  for (uint16_t i=0; i<read_n_bytes; i++)
+
+  uint8_t bytes_available = WIRE.available();
+  if (bytes_available >= read_n_bytes)
   {
-    read_buffer[i] = (uint8_t)WIRE.read();
+    for (uint16_t i=0; i<read_n_bytes; i++)
+    {
+      read_buffer[i] = (uint8_t)WIRE.read();
+    }
+    return 0;
   }
-  byte result = WIRE.endTransmission();     // stop transmitting
-#ifdef ARDUINO_ARCH_RP2040
-  if (result == 4) result = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
-#endif
-  return result;
+  return 1;
 }
 
 
@@ -204,6 +227,16 @@ hal_i2c_direct_write(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes)
     WIRE.write(write_buffer[i]);
   }
   byte result = WIRE.endTransmission();     // stop transmitting
+
+  if (write_n_bytes == 0) // shorthand for hal_i2c_slave_address_available
+  {
+    if (result != 2)
+    { // found SA; return OK
+      return 0;
+    }
+    return 1; // not found return not-ok.
+  }
+
 #ifdef ARDUINO_ARCH_RP2040
   if (result == 4) result = 0; // ignore error=4 ('other error', but I can't seem to find anything wrong; only on this MCU platform)
 #endif
@@ -228,7 +261,11 @@ hal_i2c_indirect_read(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes,
 #endif
   if (result != 0) return result;
 
-  WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
+  result = WIRE.requestFrom((uint8_t)sa, uint8_t(read_n_bytes), uint8_t(true));
+  if (result != uint8_t(read_n_bytes))
+  {
+    return -1;
+  }
   for (uint16_t i=0; i<read_n_bytes; i++)
   {
     read_buffer[i] = (uint8_t)WIRE.read();
@@ -367,7 +404,7 @@ void msc_flush_cb (void)
 void
 handle_applications()
 {
-  uint8_t channel_mask = 0xFF;
+  //uint8_t channel_mask = 0xFF;
 }
 
 uint16_t

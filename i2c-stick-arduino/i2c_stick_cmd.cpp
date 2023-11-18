@@ -153,7 +153,7 @@ char *my_dtostrf( float val,  int8_t char_num, uint8_t precision, char *chr_buff
   int       i, j ;
   float     r_val;
   long      i_val;
-  char      c, c_sign;
+  char      c_sign;
 
 
   // check the sign
@@ -299,7 +299,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
     char buf[16]; memset(buf, 0, sizeof(buf));
-    send_answer_chunk(channel_mask, "fv:" FW_VERSION, 0);
+    send_answer_chunk(channel_mask, "fv:" FW_VERSION, 1);
     return NULL;
   }
 
@@ -470,6 +470,11 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
       g_sa_drv_register[spot].disabled_ = 0;
       g_sa_drv_register[spot].nd_ = 0;
     }
+
+    // SCL low for >1.44ms ==> MLX90614 in PWM or thermal relay requires this to enter communication mode
+    hal_write_pin(17u, 0);
+    hal_delay(2);
+    hal_write_pin(17u, 1);
 
     for (uint8_t sa = 1; sa<128; sa++)
     {
@@ -1108,6 +1113,10 @@ handle_cmd_raw(uint8_t sa, uint8_t channel_mask)
     send_answer_chunk(channel_mask, "FAIL: no device driver assigned", 1);
     return;
   }
+  uint32_t time_stamp = hal_get_millis(); // update timestamp when data is available.
+  uint32_to_dec(buf, time_stamp, 8);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":", 0);
 
   if (error_message != NULL)
   {
@@ -1525,7 +1534,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     default:
       value = "Unknown";
   }
-  sprintf(buf, "%s(%d)", value, fmt);
+  sprintf(buf, "%d(%s)", fmt, value);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "ch:I2C_FREQ=", 0);
@@ -1553,7 +1562,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     default:
       value = "Unknown";
   }
-  sprintf(buf, "%s(%d)", value, freq);
+  sprintf(buf, "%d(%s)", freq, value);
   send_answer_chunk(channel_mask, buf, 1);
 
   for (uint16_t spot=1; spot<MAX_SA_DRV_REGISTRATIONS; spot++)
@@ -1565,7 +1574,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     { // skip empty spots
       continue;
     }
-    send_answer_chunk(channel_mask, "SA_DRV:", 0);
+    send_answer_chunk(channel_mask, "ch:SA_DRV=", 0);
     uint8_to_hex(buf, sa);
     send_answer_chunk(channel_mask, buf, 0);
     send_answer_chunk(channel_mask, ",", 0);
@@ -1582,7 +1591,7 @@ cmd_ch(uint8_t channel_mask, const char *input)
     { // skip the unknown drv id's
       continue;
     }
-    send_answer_chunk(channel_mask, "DRV:", 0);
+    send_answer_chunk(channel_mask, "ch:DRV=", 0);
     uint8_to_hex(buf, drv);
     send_answer_chunk(channel_mask, buf, 0);
     send_answer_chunk(channel_mask, ",", 0);
@@ -1751,7 +1760,6 @@ cmd_ch_write(uint8_t channel_mask, const char *input)
   if (!strncmp(var_name, input, strlen(var_name)))
   {
     const char *p = input+strlen(var_name);
-    uint16_t value = 0;
     uint8_t valid = true;
 
     uint8_t do_remove = false;

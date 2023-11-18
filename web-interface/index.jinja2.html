@@ -50,9 +50,8 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
-          <a id="site_version" title="Release" class="button is-info is-outlined is-small">{{versioning.web_interface}}</a>
+          <a id="site_version" title="Release" class="button is-info is-outlined is-small">V1.3.13</a>
           <a id="lbl_selected_port" title="VID/PID of selected serial port" class="button is-info is-outlined is-small">USB</a>
-          <!-- <a id="btn_trial" class="button is-primary is-outlined">Trial</a> -->
           <a id="btn_open_port" class="button is-primary is-outlined">Open</a>
           <a id="btn_close_port" class="button is-primary is-outlined">Close</a>
         </div>
@@ -68,47 +67,48 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
 <div class="template slave_transient_chart">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
-    <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
-    <button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
+    <button data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info btn_config">@[sa]:[device]</button>
+    <button data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info btn_mv">MV</button>
   </div>
 </div>
 
 <div class="template slave_spatial_chart">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
-    <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
-<button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
+    <button data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info btn_config">@[sa]:[device]</button>
+    <button data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info btn_mv">MV</button>
   </div>
 </div>
 
 <div class="template slave_terminal">
   <div data-sa="sa" class="row slaves">
-    <input type="checkbox" id="slave_enable" name="chk_slave_enable" value="chk_slave_enable" checked=false class="slave_enable checkmark default_off">
-    <button id="btn_config" data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info">@[sa]:[device]</button>
-    <button id="btn_mv" data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info">MV</button>
-    <button id="btn_raw" data-cmd="raw" title="get RAW sensor data" class="button cmd is-small is-info">RAW</button>
-    <button id="btn_nd" data-cmd="nd" title="is New Data available?" class="button cmd is-small is-info">ND</button>
-    <button id="btn_sn" data-cmd="sn" title="get Serial Number" class="button cmd is-small is-info">SN</button>
-    <button id="btn_cs" data-cmd="cs" title="get Configuration of Sensor" class="button cmd is-small is-info">CS</button>
+    <input type="checkbox" name="chk_slave_enable" value="chk_slave_enable" checked="checked" class="slave_enable checkmark default_off">
+    <button data-cmd="cs" title="Configure Slave" class="button cmd is-small is-info btn_config">@[sa]:[device]</button>
+    <button data-cmd="mv" title="interactive Measure sensor Values" class="button cmd is-small is-info btn_mv">MV</button>
+    <button data-cmd="raw" title="get RAW sensor data" class="button cmd is-small is-info btn_raw">RAW</button>
+    <button data-cmd="nd" title="is New Data available?" class="button cmd is-small is-info btn_nd">ND</button>
+    <button data-cmd="sn" title="get Serial Number" class="button cmd is-small is-info btn_sn">SN</button>
+    <button data-cmd="cs" title="get Configuration of Sensor" class="button cmd is-small is-info btn_cs">CS</button>
   </div>
 </div>
 
 <div id="main">
   <div id="tabs_main">
-    <div id="tab_i2c_stick" class="content is-active">
+    <div id="div_i2c_stick" class="content is-active">
       {% include "i2c-stick.html" without context %}
     </div>
 
-    <div id="tab_products" class="content my_col col-12">
+    <div id="div_products" class="content my_col col-12">
       {% include "products.html" without context %}
     </div>
 
-    <div id="tab_firmware" class="content my_col col-12">
+    <div id="div_firmware" class="content my_col col-12">
       {% include "firmware.html" without context %}
+      {% include "firmware_list.html" without context %}
     </div>
 
-    <div id="tab_interface" class="my_col col-12">
+    <div id="div_interface" class="my_col col-12">
       <div id="interface_tabs" class="tabs is-fullwidth is-no-margin">
         <ul>
           <li id="tab_int_transient" class="is-active"><a>Transient chart</a></li>
@@ -117,7 +117,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
         </ul>
       </div>
 
-      <div id="tab_int_terminal" class="tab_content content is-no-margin">
+      <div id="div_int_terminal" class="tab_content content is-no-margin">
         <div class="columns">
           <div class="column is-8" style="padding-bottom: 0px;">
             <main id="log" style="left: 0px; width: 100%; height:100px;">
@@ -129,14 +129,14 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
           <div class="column is-4">
 
             <div class="checkboxes">
-              <input type="checkbox" id="chk_auto_scroll" name="chk_auto_scroll" value="auto_scroll" checked=true class="checkmark">
+              <input type="checkbox" id="chk_auto_scroll" name="chk_auto_scroll" value="auto_scroll" checked="checked" class="checkmark">
                 <label for="chk_auto_scroll">Auto scroll</label>
               <br/>
-              <input type="checkbox" id="chk_add_datetime" name="chk_add_datetime" value="add_datetime" checked=true class="checkmark">
+              <input type="checkbox" id="chk_add_datetime" name="chk_add_datetime" value="add_datetime" checked="checked" class="checkmark">
                 <label for="chk_add_datetime">Add date&time</label>
               <br/>
               <div class="select is-fullwidth is-small is-link">
-                <select name="combo_i2c_freq" id="combo_i2c_freq" class="combo_i2c_freq">
+                <select name="combo_i2c_freq" class="combo_i2c_freq">
                   <option value="F10k" >I2C - 10kHz</option>
                   <option value="F20k" >I2C - 20kHz</option>
                   <option value="F50k" >I2C - 50kHz</option>
@@ -149,10 +149,10 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
             <fieldset class="sidebar">
               <legend>Control I2C bus</legend>
-              <button id="btn_scan" data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info">Scan</button>
-              <button id="btn_continuous"  data-cmd=";" title="Continuous acquisition" class="button cmd is-info">Start</button>
-              <button id="btn_interactive" data-cmd="!" title="Interactive acquisition" class="button cmd is-info">Stop</button>
-              <button id="btn_help" data-cmd="?" title="Help" class="button cmd is-info">Help</button>
+              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan</button>
+              <button data-cmd=";" title="Continuous acquisition" class="button cmd is-info btn_continuous">Start</button>
+              <button data-cmd="!" title="Interactive acquisition" class="button cmd is-info btn_interactive">Stop</button>
+              <button data-cmd="?" title="Help" class="button cmd is-info btn_help">Help</button>
             </fieldset>
 
             <fieldset class="sidebar">
@@ -165,7 +165,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
         </div>
       </div>
 
-      <div id="tab_int_transient" class="tab_content content is-active is-no-margin">
+      <div id="div_int_transient" class="tab_content content is-active is-no-margin">
         <div class="columns">      
           <div class="column is-9" style="padding-bottom: 0px;">
             <div id="div_transient_chart" style="display: inline-block; position: relative; width: 100%; height: 400px;">
@@ -175,11 +175,8 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
           <div class="column is-3">
             <div class="checkboxes">
-              <input type="checkbox" id="chk_transient_enable" name="chk_transient_enable" value="chk_transient_enable" checked=false class="checkmark default_off">
-                <label for="chk_transient_enable">Enable chart</label>
-              <br/>
               <div class="select is-fullwidth is-small is-link">
-                <select name="combo_i2c_freq" id="combo_i2c_freq" class="combo_i2c_freq">
+                <select name="combo_i2c_freq" class="combo_i2c_freq">
                   <option value="F10k" >I2C - 10kHz</option>
                   <option value="F20k" >I2C - 20kHz</option>
                   <option value="F50k" >I2C - 50kHz</option>
@@ -192,9 +189,9 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
             <fieldset class="sidebar">
               <legend>Control I2C bus</legend>
-              <button id="btn_scan" data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info">Scan</button>
-              <button id="btn_continuous"  data-cmd=";" title="Continuous acquisition" class="button cmd is-info">Start</button>
-              <button id="btn_interactive" data-cmd="!" title="Interactive acquisition" class="button cmd is-info">Stop</button>              
+              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan</button>
+              <button data-cmd=";" title="Continuous acquisition" class="button cmd is-info btn_continuous">Start</button>
+              <button data-cmd="!" title="Interactive acquisition" class="button cmd is-info btn_interactive">Stop</button>
             </fieldset>
 
             <fieldset class="sidebar">
@@ -207,7 +204,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
         </div>
       </div>
 
-      <div id="tab_int_spatial" class="tab_content content is-no-margin">
+      <div id="div_int_spatial" class="tab_content content is-no-margin">
         <div class="columns">
           
           <div class="column is-9" style="padding-bottom: 0px;">
@@ -218,11 +215,8 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
           <div class="column is-3">
             <div class="checkboxes">
-              <input type="checkbox" id="chk_spatial_enable" name="chk_spatial_enable" value="chk_spatial_enable" checked=false class="checkmark default_off">
-                <label for="chk_spatial_enable">Enable chart</label>
-              <br/>
               <div class="select is-fullwidth is-small is-link">
-                <select name="combo_i2c_freq" id="combo_i2c_freq" class="combo_i2c_freq">
+                <select name="combo_i2c_freq" class="combo_i2c_freq">
                   <option value="F10k" >I2C - 10kHz</option>
                   <option value="F20k" >I2C - 20kHz</option>
                   <option value="F50k" >I2C - 50kHz</option>
@@ -258,9 +252,9 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
             <fieldset class="sidebar">
               <legend>Control I2C bus</legend>
-              <button id="btn_scan" data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info">Scan</button>
-              <button id="btn_continuous"  data-cmd=";" title="Continuous acquisition" class="button cmd is-info">Start</button>
-              <button id="btn_interactive" data-cmd="!" title="Interactive acquisition" class="button cmd is-info">Stop</button>
+              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan</button>
+              <button data-cmd=";" title="Continuous acquisition" class="button cmd is-info btn_continuous">Start</button>
+              <button data-cmd="!" title="Interactive acquisition" class="button cmd is-info btn_interactive">Stop</button>
             </fieldset>
 
             <fieldset class="sidebar">
@@ -273,6 +267,22 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="modal" id="error-popup">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+    <header class="modal-card-head">
+      <p class="modal-card-title">Error</p>
+      <button class="delete keep" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+      <h1>MY CONTENT</h1>
+    </section>
+    <footer class="modal-card-foot">
+      <button class="button is-success keep">OK</button>
+    </footer>
   </div>
 </div>
 

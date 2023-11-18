@@ -9,3 +9,7 @@ web-interface/*.html
 !web-interface/assets/**/*.min.js
 !web-interface/assets/**/*.min.css
 web-interface/melexis-bulma.css
+.idea
+venv
+.doit.db*
+__pycache__

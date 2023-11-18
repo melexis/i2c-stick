@@ -14,13 +14,13 @@ Check communication with MCU and return "Melexis Inspired Engineering".
 
 Send: `mlx` + `LF`
 
-Receive: 
- - `mlx:MELEXIS I2C STICK`             + `LF`                    
- - `mlx:=================`             + `LF`                    
- - `mlx:`                              + `LF`       
- - `mlx:Melexis Inspired Engineering`  + `LF`                                   
- - `mlx:`                              + `LF`       
- - `mlx:hit '?' for help`              + `LF`                       
+Receive:
+ - `mlx:MELEXIS I2C STICK`             + `LF`
+ - `mlx:=================`             + `LF`
+ - `mlx:`                              + `LF`
+ - `mlx:Melexis Inspired Engineering`  + `LF`
+ - `mlx:`                              + `LF`
+ - `mlx:hit '?' for help`              + `LF`
 
 ### `fv` - Firmware Version Command
 
@@ -82,7 +82,7 @@ Send: READ: `i2c:` + `sa` + `:R:` + `<#bytes to read>:<STATUS>` + `LF`
 
 Receive example: `i2c:3A:R:FF:OK` + `LF`
 
-Meaning: 
+Meaning:  
 Send: read from slave address 3A(hex, 7 bit), 1 byte.  
 Receive: First byte is FF hex.
 
@@ -119,6 +119,55 @@ Meaning: First is 3004hex written to slave address 3A(7-bit), then a repeated st
 Meaning: read at register address 3004h from slave address 3A(hex, 7 bit), 2 bytes.
 
 The first byte is 0x5A, the 2nd is 0x69.
+
+### `ch` - get Configure Host command
+
+Get the configuration of the host:  
+- the format of the communication
+- the I2C frequency
+- which drivers there are provided by the firmware
+- The slave address assosiations with the drivers
+
+Send: `ch` + `LF`
+
+Receive: `ch:<configuration>=<value>[(<description>)]` + `LF`
+
+Receive example:
+```
+ch:FORMAT=0(DEC)
+ch:I2C_FREQ=0(100kHz)
+ch:SA_DRV=5A,01,MLX90614
+ch:SA_DRV=3E,01,MLX90614
+ch:SA_DRV=33,02,MLX90640
+ch:SA_DRV=33,03,MLX90641
+ch:SA_DRV=3A,04,MLX90632
+ch:DRV=01,MLX90614
+ch:DRV=02,MLX90640
+ch:DRV=03,MLX90641
+ch:DRV=04,MLX90632
+```
+
+### `+ch` - set Configure Host command
+
+Set the configuration of the host:  
+- the format of the communication
+- the I2C frequency
+- which drivers there are provided by the firmware
+- The slave address assosiations with the drivers
+
+Send: `+ch:<configuration>=<value>|<description>` + `LF`
+
+Receive: `+ch:<status> [<where the configuration is stored>]` + `LF`
+
+Send example:  
+```
++ch:FORMAT=DEC
+```
+
+Receive example:  
+```
++ch:OK [host-register]
+```
 
 ### `scan` - Scan I2C bus command
 
@@ -299,10 +348,10 @@ Meaning: The sensor at slave address 3A has new data.
 Read the memory content of the selected sensor.
 
 Format: `mr::<address>` + `LF`  
-or
-Format: `mr:` + `sa` + `:<address>` + `LF`
-or
-Format: `mr:` + `sa` + `:<address>,<address_count>` + `LF`
+or  
+Format: `mr:` + `sa` + `:<address>` + `LF`  
+or  
+Format: `mr:` + `sa` + `:<address>,<address_count>` + `LF`  
 
 Note: `<address>` and `<address_count>` are in hex format with 4 characters (always)
 
@@ -318,10 +367,10 @@ receive: `mr:3A:2400,10,01,0003,DATA,EF4A,3480` + `LF`
 Write the memory content of the selected sensor.
 
 Format: `mw::<address>,<data>` + `LF`  
-or
-Format: `mr:` + `sa` + `:<address>,<data>` + `LF`
-or
-Format: `mr:` + `sa` + `:<address>,<data>,<data+1>,..` + `LF`
+or  
+Format: `mr:` + `sa` + `:<address>,<data>` + `LF`  
+or  
+Format: `mr:` + `sa` + `:<address>,<data>,<data+1>,..` + `LF`  
 
 Note: `<address>` and `<data>` are in hex format with 4 characters (always)
 

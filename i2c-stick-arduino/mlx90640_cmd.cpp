@@ -418,28 +418,38 @@ cmd_90640_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":RR=", 0);
-  uint8_to_hex(buf, rr);
+  itoa(rr, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":RES=", 0);
-  uint8_to_hex(buf, res);
+  itoa(res, buf, 10);
   send_answer_chunk(channel_mask, buf, 1);
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":MODE=", 0);
-  uint8_to_hex(buf, mode);
-  send_answer_chunk(channel_mask, buf, 1);
+  itoa(mode, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  if (mode == 0)
+  {
+    send_answer_chunk(channel_mask, "(TV)", 1);
+  } else if (mode == 1)
+  {
+    send_answer_chunk(channel_mask, "(CHESS)", 1);
+  } else
+  {
+    send_answer_chunk(channel_mask, "(Unknown)", 1);
+  }
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);
   send_answer_chunk(channel_mask, buf, 0);
   send_answer_chunk(channel_mask, ":FLAGS=", 0);
-  uint8_to_hex(buf, mlx->flags_);
+  itoa(mlx->flags_, buf, 10);
   send_answer_chunk(channel_mask, buf, 0);
 
   uint8_t is_first_flag = 1;
@@ -617,12 +627,12 @@ cmd_90640_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
     send_answer_chunk(channel_mask, "+cs:", 0);
     uint8_to_hex(buf, sa);
     send_answer_chunk(channel_mask, buf, 0);
-    if (!strcmp(input+strlen(var_name), "CHESS"))
+    if ((!strcmp(input+strlen(var_name), "CHESS")) || ((!strcmp(input+strlen(var_name), "1"))))
     {
       MLX90640_SetChessMode(sa);
       send_answer_chunk(channel_mask, ":MODE=OK [mlx-register]", 1);
     }
-    else if (!strcmp(input+strlen(var_name), "TV"))
+    else if ((!strcmp(input+strlen(var_name), "TV")) || ((!strcmp(input+strlen(var_name), "0"))))
     {
       MLX90640_SetInterleavedMode(sa);
       send_answer_chunk(channel_mask, ":MODE=OK [mlx-register]", 1);

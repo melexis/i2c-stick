@@ -163,6 +163,7 @@ extern "C" {
 #define MLX90632_EE_Ha 0x2481 /**< Ha customer calibration value register 16bit */
 #define MLX90632_EE_Hb 0x2482 /**< Hb customer calibration value register 16bit */
 
+#define MLX90632_EE_MEAS_BASE 0x24E0
 
 /* Register addresses - volatile */
 #define MLX90632_REG_I2C_ADDR   0x3000 /**< Chip I2C address register */
@@ -229,7 +230,7 @@ struct Mlx90632Device
   struct Mlx90632AdcData adc_data_;
   struct Mlx90632CalibData calib_data_;
   uint8_t slave_address_;
-
+  uint8_t meas_select_;
 };
 
 
