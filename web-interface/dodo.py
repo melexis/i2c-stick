@@ -68,6 +68,36 @@ if platform.system().lower() == 'windows':
 with open(CONTEXT_FILE) as f:
     context = yaml.load(f, Loader=yaml.FullLoader)
 
+for driver in context['drivers']:
+    if 'disable' not in driver:
+        driver['disable'] = 0
+
+# Arduino compiles all cpp files in the directory; rename to <ori>.disable
+for driver in context['drivers']:
+    if driver['disable']:
+        files = list(Path(".").glob(driver['scr_name'] + "_*.cpp")) + list(Path(".").glob(driver['scr_name'] + "_*.h"))
+        for file in files:
+            shutil.move(file, str(file) + ".disable")
+
+# undo: Arduino compiles all cpp files in the directory; rename to <ori>.disable
+for driver in context['drivers']:
+    if driver['disable'] == 0:
+        files = list(Path(".").glob(driver['scr_name'] + "_*.disable"))
+        for file in files:
+            shutil.move(file, str(file).replace(".disable", ""))
+
+# remove the disabled drivers
+context['drivers'] = [driver for driver in context['drivers'] if driver['disable'] == 0]
+
+# remove the disabled boards
+for board in context['boards']:
+    if 'disable' not in board:
+        board['disable'] = 0
+
+context['boards'] = [board for board in context['boards'] if board['disable'] == 0]
+
+
+
 
 def str_presenter(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
