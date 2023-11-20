@@ -92,6 +92,23 @@ $(window).resize(function() {
 });
 
 $(document).ready(function () {
+// navigation bar
+  $(".navbar-burger").click(function () {
+    $(".navbar-burger").toggleClass('is-active');
+    $(".navbar-menu").toggleClass('is-active');
+  });
+
+  $(".navbar-menu.is-active").click(function () {
+    $(".navbar-burger").toggleClass('is-active');
+    $(".navbar-menu").toggleClass('is-active');
+   });
+
+  $("div#main, .navbar-start").click(function () {
+    $(".navbar-burger").removeClass('is-active');
+    $(".navbar-menu").removeClass('is-active');
+   });
+//end navigation bar
+
   $(".js-modal-trigger").click(function(){
     const modal = $(this).data('target');
     let target = $("#"+modal+'.modal');
