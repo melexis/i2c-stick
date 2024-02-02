@@ -24,7 +24,7 @@ boards:
   USB_PID: 0x0483
   USB_VID: 0x16C0
 - fqbn: teensy:avr:teensy40
-  disable: 0
+  disable: 1
   name: Teensy 4.0
   nick: teensy40
   core: teensy:avr
