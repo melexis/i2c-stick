@@ -745,7 +745,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     } else
     {
       send_answer_chunk(channel_mask, this_cmd, 0);
-      send_answer_chunk(channel_mask, ":FAIL:pwm invalid pin_num", 1);
+      send_answer_chunk(channel_mask, ":FAIL:invalid pin_no", 1);
     }
     return NULL;
   }
