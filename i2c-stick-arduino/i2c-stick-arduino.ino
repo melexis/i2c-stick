@@ -139,9 +139,9 @@ hal_write_pin(uint8_t pin, uint8_t state)
 
 
 uint8_t
-hal_read_pin(uint8_t pin)
+hal_read_pin(uint8_t pin, uint8_t pullup)
 {
-  pinMode(pin, INPUT);
+  pinMode(pin, pullup ? INPUT_PULLUP : INPUT);
   return digitalRead(pin);
 }
 

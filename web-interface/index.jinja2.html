@@ -124,7 +124,14 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
               <section id="serial_terminal" style="height: 100%; overflow: auto;">
               </section>        
             </main>        
-            <input type="text" class="input is-primary" id="serial_send" name="serial_send" style="width:100%;margin-top: 5px;" placeholder="Enter here the command to sent and press <ENTER>" />
+            <div class="field has-addons" style="width:100%;margin-top: 5px;">
+              <div class="control is-expanded">
+                <input type="text" class="input is-primary is-11" id="serial_send" name="serial_send" placeholder="Enter here the command to sent and press <ENTER>" />
+              </div>
+              <p class="control">
+                  <a title="Sent" class="button is-primary btn_sent">Sent</a>
+              </p>
+            </div>
           </div>
           <div class="column is-4">
 
@@ -290,5 +297,4 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 <script type="text/javascript" src="./assets/site/jquery-3.6.1.min.js"></script>
 <script type="text/javascript" src="./assets/site/chart.min.js"></script>
 <script type="text/javascript" src="./interface.min.js"></script>
-
 </html>

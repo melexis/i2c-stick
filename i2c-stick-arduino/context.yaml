@@ -23,6 +23,16 @@ boards:
   port_discovery_method: arduino-cli
   USB_PID: 0x0483
   USB_VID: 0x16C0
+- fqbn: teensy:avr:teensy40
+  disable: 0
+  name: Teensy 4.0
+  nick: teensy40
+  core: teensy:avr
+  bin_extension: hex
+  url: https://www.pjrc.com/store/teensy40.html
+  port_discovery_method: arduino-cli
+  USB_PID: 0x0483
+  USB_VID: 0x16C0
 - fqbn: esp32:esp32:sparkfun_esp32c6_qwiic_pocket
   disable: 1
   name: Sparkfun ESP32-C6 QWIIC pocket

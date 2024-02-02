@@ -289,7 +289,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     send_answer_chunk(channel_mask, "mlx:MELEXIS I2C STICK", 1);
     send_answer_chunk(channel_mask, "mlx:=================", 1);
     send_answer_chunk(channel_mask, "mlx:", 1);
-    send_answer_chunk(channel_mask, "mlx:Melexis Inspired Engineering", 1);
+    send_answer_chunk(channel_mask, "mlx:Melexis Innovation with Heart", 1);
     send_answer_chunk(channel_mask, "mlx:", 1);
     send_answer_chunk(channel_mask, "mlx:hit '?' for help", 1);
     return NULL;
@@ -701,6 +701,52 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     }
 
 
+    return NULL;
+  }
+
+  this_cmd = "pin"; // Pin command
+  if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
+  {
+    int16_t pin_no = -1;
+    if (cmd[strlen(this_cmd)] == ':')
+    {
+      const char *p = cmd+strlen(this_cmd)+1;
+      if (('0' <= *p) && (*p <= '9'))
+      {
+        pin_no = atoi(p);
+      }
+    }
+    if (pin_no >= 0)
+    {
+      const char *p = strchr(cmd+strlen(this_cmd)+1, ':');
+      int16_t value = -1;
+      if (p)
+      {
+        value = atoi(p+1);
+      } else
+      {
+        value = hal_read_pin(pin_no, strchr(cmd+strlen(this_cmd)+1, '+') ? 1 : 0);
+        char buf[32];
+        sprintf(buf, ":%d:read:%d", pin_no, value);
+        send_answer_chunk(channel_mask, this_cmd, 0);
+        send_answer_chunk(channel_mask, buf, 1);
+        return NULL;
+      }
+      if ((value == 0) || (value == 1))
+      {
+        hal_write_pin(pin_no, value);
+        send_answer_chunk(channel_mask, this_cmd, 0);
+        send_answer_chunk(channel_mask, ":OK", 1);
+      } else
+      {
+        send_answer_chunk(channel_mask, this_cmd, 0);
+        send_answer_chunk(channel_mask, ":FAIL:Invalid pin value", 1);
+      }
+    } else
+    {
+      send_answer_chunk(channel_mask, this_cmd, 0);
+      send_answer_chunk(channel_mask, ":FAIL:pwm invalid pin_num", 1);
+    }
     return NULL;
   }
 

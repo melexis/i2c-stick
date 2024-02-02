@@ -5,10 +5,14 @@ const mlx_coral_red = "#DB4140";
 const mlx_royal_blue = "#00354B";
 const mlx_charcoal_grey = "#3e4242";
 
+var serial_module = null;
+if ('serial' in navigator)
+{
+  serial_module = navigator.serial;
+}
 
 const color_palette = [mlx_electric_green, mlx_coral_red, mlx_gold_yellow, mlx_royal_blue, mlx_steel_grey, "#e60049", "#0bb4ff", "#50e991", "#e6d800", "#9b19f5", "#ffa300", "#dc0ab4", "#b3d4ff", "#00bfa0"];
 
-var has_serial = false;
 var serial = null;
 var g_heat_map = 0;
 
@@ -280,7 +284,7 @@ function get_pixel_value(img_dat, x,y, result = []){
 function sent_command(command)
 {
   const sent_event = new CustomEvent('sent', { detail: command });
-  div = document.querySelector('#sent_data');
+  let div = document.querySelector('#sent_data');
   div.dispatchEvent(sent_event);
 }
 
@@ -301,7 +305,7 @@ $(document).ready(function () {
     sent_command("+ch:I2C_FREQ="+this.value+"\n");
   });
 
-  if (!("serial" in navigator)) {
+  if (serial_module === null) {
     // The Web Serial API is NOT supported.
     $('button').not('.keep').prop('disabled', true); // disable all buttons!
     $("#serial_terminal").append('<pre>==> This page uses "Web Serial API".</pre><br>');
@@ -319,14 +323,39 @@ $(document).ready(function () {
     $("#serial_terminal").append('<pre> - Windows 10+</pre><br>');
     return;
   }
-  has_serial = true;
   $("#lbl_selected_port").text(selected_port.usbVendorId + '/' + selected_port.usbProductId);
 
-  div = document.querySelector('#receive_data');
+  let div = document.querySelector('#receive_data');
+
+  // listener to generate receive_line events.
+  div.addEventListener('receive', (e) => {
+    var value_str = dec.decode(e.detail);
+    value_str = value_str.replaceAll('\r', '');
+
+    let lines = value_str.split("\n");
+
+    let complete_lines = lines.slice(0, -1);
+    if (complete_lines.length > 0)
+    {
+      complete_lines[0] = receive_buffer + complete_lines[0];
+      receive_buffer = "";
+    }
+
+    for (let i=0; i<complete_lines.length; i++)
+    {
+      const receive_line_event = new CustomEvent('receive_line', { detail: complete_lines[i] });
+      let receive_div = document.querySelector('#receive_data');
+      receive_div.dispatchEvent(receive_line_event);
+    }
+
+    receive_buffer += lines.slice(-1);
+
+  }, false);
 
   // show receiving data in terminal...
-  div.addEventListener('receive', (e) => {
-    var value_str = dec.decode(e.detail).replaceAll('\r', '');
+  div.addEventListener('receive_line', (e) => {
+//    var value_str = dec.decode(e.detail).replaceAll('\r', '');
+    var value_str = e.detail;
     let dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
     {
@@ -347,22 +376,15 @@ $(document).ready(function () {
       has_line_ending = true;
       values.pop();
     }
+    has_line_ending = true;
 
     let term = $("#serial_terminal");
 
     let term_html = term.html();
     if (term_html.length > 50000)
     {
-      let last_part = term_html.split("<br>").slice(-1);
-      if (last_part === '')
-      {
         term.empty();
         term.append("<br>");
-      } else
-      {
-        term.html(last_part);
-      }
-      term_html = term.html();
     }
     if (term.html().endsWith("<br>"))
     {
@@ -380,29 +402,6 @@ $(document).ready(function () {
     }
   }, false);
 
-  // listener to generate recieve_line events.
-  div.addEventListener('receive', (e) => {
-    var value_str = dec.decode(e.detail);
-    value_str = value_str.replaceAll('\r', '');
-
-    let lines = value_str.split("\n");
-
-    let complete_lines = lines.slice(0, -1);
-    if (complete_lines.length > 0)
-    {
-      complete_lines[0] = receive_buffer + complete_lines[0];
-      receive_buffer = "";
-    }
-
-    for (let i=0; i<complete_lines.length; i++)
-    {
-      const recieve_line_event = new CustomEvent('receive_line', { detail: complete_lines[i] });
-      div.dispatchEvent(recieve_line_event);
-    }
-
-    receive_buffer += lines.slice(-1);
-
-  }, false);
 
   // listener to enable buttons
   div.addEventListener('receive_line', (e) => {
@@ -495,7 +494,7 @@ $(document).ready(function () {
               let u = connected_slaves[sa].cs.MV_UNIT[i];
               // let r = connected_slaves[sa].cs.MV_RES[i];
               let trace_i = transient_chart.data.datasets.length;
-              dataset = {label: d + "@" + sa + ": " + h + " [" + u + "]",
+              let dataset = {label: d + "@" + sa + ": " + h + " [" + u + "]",
                          data: [],
                          backgroundColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 0.2),
                          borderColor: hex_to_rgba(color_palette[trace_i%color_palette.length], 1),
@@ -921,6 +920,8 @@ $(document).ready(function () {
       // "ls:5A:01,00,00,MLX90614"
       // "scan:5A:01,00,00,MLX90614"
       let tmp = line.split(":");
+      if (tmp.length > 2)
+      {
       let sa = tmp[1];
       let drv_dev = tmp[2].split(",");
       let drv = Number(drv_dev[0]);
@@ -930,7 +931,7 @@ $(document).ready(function () {
 
       connected_slaves[sa] = {drv: drv, device: device, raw: raw, disabled: disabled};
 
-      new_div = $($(".slave_transient_chart").html()).attr("data-sa", sa);
+        let new_div = $($(".slave_transient_chart").html()).attr("data-sa", sa);
       new_div.children(".btn_config").text("@"+sa+":"+device);
       new_div.children(".slave_enable").prop('checked', disabled ? false : true);
       new_div.children("button.button.cmd").one('click', function () {
@@ -962,6 +963,7 @@ $(document).ready(function () {
         checkbox_slave_enable(this);
       });
       new_div.appendTo("#terminal_slaves");
+    }
     }
 
     if (line.startsWith ("cs:"))
@@ -1084,7 +1086,7 @@ $(document).ready(function () {
     }
     let value_byte = enc.encode(value_str);
 
-    dt = get_date_time();
+    let dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
     {
       dt = '';
@@ -1165,9 +1167,9 @@ async function serial_open_and_start_reading()
   keep_reading = true;
   try
   {
-    await serial.open({ baudRate: 1000000 });
+    await serial.open({ baudRate: 1000000, bufferSize: 5000 });
 
-    dt = get_date_time();
+    let dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
     {
       dt = '';
@@ -1193,7 +1195,7 @@ async function serial_open_and_start_reading()
     $("div#main button.button").prop('disabled', true); // disable input entry!
     $("#btn_open_port").removeClass("is-light");
 
-    dt = get_date_time();
+    let dt = get_date_time();
     if (!($("#chk_add_datetime").is(":checked")))
     {
       dt = '';
@@ -1251,9 +1253,9 @@ async function serial_open_and_start_reading()
           reader.releaseLock();
           break;
         }
-        const recieve_event = new CustomEvent('receive', { detail: value });
-        div = document.querySelector('#receive_data');
-        div.dispatchEvent(recieve_event);
+        const receive_event = new CustomEvent('receive', { detail: value });
+        let div = document.querySelector('#receive_data');
+        div.dispatchEvent(receive_event);
       }
     } catch (error) {
       console.log(error);
@@ -1261,7 +1263,7 @@ async function serial_open_and_start_reading()
       $("div#main button.button").prop('disabled', true); // disable input entry!
       $("#btn_open_port").removeClass("is-light");
 
-      dt = get_date_time();
+      let dt = get_date_time();
       if (!($("#chk_add_datetime").is(":checked")))
       {
         dt = '';
@@ -1297,7 +1299,7 @@ $("#lbl_selected_port").click(async () => {
   {
     await close_port();
   }
-  serial = await navigator.serial.requestPort();
+  serial = await serial_module.requestPort();
   if (serial != null)
   {
     selected_port = serial.getInfo();
@@ -1314,14 +1316,13 @@ $("#btn_open_port").click(async () => {
     await close_port();
   }
 
-  if (!('serial' in navigator))
+  if (serial_module === null)
   {
     pop_error($("#serial_terminal").html());
     return;
   }
 
-
-  const ports = await navigator.serial.getPorts();
+  const ports = await serial_module.getPorts();
   for (let i = 0; i< ports.length; i++)
   {
     let port = ports[i];
@@ -1336,7 +1337,7 @@ $("#btn_open_port").click(async () => {
 
   if (serial == null)
   {
-    serial = await navigator.serial.requestPort({ filters: accepted_ports });
+    serial = await serial_module.requestPort({ filters: accepted_ports });
     if (serial != null)
     {
       selected_port = serial.getInfo();
@@ -1400,10 +1401,16 @@ function checkbox_slave_enable(chkbox)
   }
 }
 
+$(".btn_sent").click(function(){
+  let current_entry = $("#serial_send").val();
+  sent_command(current_entry + '\n');
+  $("#serial_send").val("");
+});
+
 $("#serial_send").on('keyup', function (val, key) {
   const single_char_cmd_list = [';', '!', '>', '<', '?', '1', '5'];
   // check if current value is a single character command
-  current_entry = $(this).val();
+  let current_entry = $(this).val();
   if (current_entry.length == 1)
   {
     if (single_char_cmd_list.includes(current_entry))

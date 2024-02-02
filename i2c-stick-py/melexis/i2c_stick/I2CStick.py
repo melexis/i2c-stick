@@ -444,6 +444,17 @@ class I2CStick:
         a = self.run_cmd("pwm:{}:{}".format(pin, pwm))
         return a
 
+    def pinvalue(self, pin, val): # alias for pin
+        return self.pin(pin, val)
+
+    def pin(self, pin, val=None):
+        """set or get a pin of the I2C-stick"""
+        if val is None:
+            return self.run_cmd("pin:{}".format(pin))
+        if val == 'pullup':
+            return self.run_cmd("pin:{}+".format(pin))
+        return self.run_cmd("pin:{}:{}".format(pin, val))
+
 
 if __name__ == '__main__':
     mis = I2CStick("COM154")

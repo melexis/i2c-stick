@@ -524,19 +524,22 @@ def task_dist():
                 "robots.txt",
                 "sitemap.txt",
                 ]
-    files = " ".join(file_dep)
 
     def make_dist_dir():
         if not Path("../dist").is_dir():
             os.mkdir('../dist')
 
+    def do_copy(task):
+        shutil.copytree("assets", "../dist/assets", dirs_exist_ok=True)
+        for file in task.file_dep:
+            shutil.copy(file, f"../dist/{file}")
+
     return {
         'actions': [(make_dist_dir,),
-                    f"cp -frv {files} assets ../dist",
+                    (do_copy, )
                     ],
         'file_dep': file_dep,
         'uptodate': [False],
-        'title': show_cmd,
         'verbosity': 2,
     }
 
