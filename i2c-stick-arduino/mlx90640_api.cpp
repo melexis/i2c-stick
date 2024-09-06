@@ -18,6 +18,7 @@
 #include "mlx90640_api.h"
 #include <math.h>
 
+
 static void ExtractVDDParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);
 static void ExtractPTATParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);
 static void ExtractGainParameters(uint16_t *eeData, paramsMLX90640 *mlx90640);

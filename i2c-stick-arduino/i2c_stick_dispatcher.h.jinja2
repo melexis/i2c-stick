@@ -17,9 +17,19 @@ extern "C" {
 #define DRV_{{driver.name}}_NAME "{{driver.name}}"
 {%- endfor %}
 
+// applications declarations:
+{%- for app in applications %}
+#define APP_{{app.name}}_ID {{app.id}}
+#define APP_{{app.name}}_NAME "{{app.name}}"
+{%- endfor %}
+
 int16_t i2c_stick_register_all_drivers();
 const char* i2c_stick_get_drv_name_by_drv(uint8_t drv);
 uint8_t i2c_stick_get_drv_by_drv_name(const char *drv_name);
+const char* i2c_stick_get_app_name(uint8_t drv);
+uint8_t i2c_stick_get_app_id(const char *drv_name);
+
+void handle_applications(uint8_t channel_mask);
 
 uint8_t cmd_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_message);
 uint8_t cmd_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_message);
@@ -29,6 +39,11 @@ uint8_t cmd_cs(uint8_t sa, uint8_t channel_mask, const char *input);
 uint8_t cmd_cs_write(uint8_t sa, uint8_t channel_mask, const char *input);
 uint8_t cmd_mr(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
 uint8_t cmd_mw(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
+uint8_t cmd_la(uint8_t channel_mask);
+uint8_t cmd_app_begin(uint8_t app_id, uint8_t channel_mask);
+uint8_t cmd_app_end(uint8_t channel_mask);
+uint8_t cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input);
+uint8_t cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input);
 
 uint8_t cmd_is(uint8_t sa, uint8_t drv, uint8_t *is_ok, char const **error_message);
 uint8_t cmd_tear_down(uint8_t sa);

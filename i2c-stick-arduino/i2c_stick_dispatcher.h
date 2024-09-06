@@ -12,18 +12,28 @@ extern "C" {
 #endif
 
 // driver declarations:
-#define DRV_MLX90614_ID 1
+#define DRV_MLX90394_ID 1
+#define DRV_MLX90394_NAME "MLX90394"
+#define DRV_MLX90614_ID 2
 #define DRV_MLX90614_NAME "MLX90614"
-#define DRV_MLX90632_ID 2
+#define DRV_MLX90632_ID 3
 #define DRV_MLX90632_NAME "MLX90632"
-#define DRV_MLX90640_ID 3
+#define DRV_MLX90640_ID 4
 #define DRV_MLX90640_NAME "MLX90640"
-#define DRV_MLX90641_ID 4
+#define DRV_MLX90641_ID 5
 #define DRV_MLX90641_NAME "MLX90641"
+
+// applications declarations:
+#define APP_MLX90394_THUMBSTICK_ID 1
+#define APP_MLX90394_THUMBSTICK_NAME "MLX90394_THUMBSTICK"
 
 int16_t i2c_stick_register_all_drivers();
 const char* i2c_stick_get_drv_name_by_drv(uint8_t drv);
 uint8_t i2c_stick_get_drv_by_drv_name(const char *drv_name);
+const char* i2c_stick_get_app_name(uint8_t drv);
+uint8_t i2c_stick_get_app_id(const char *drv_name);
+
+void handle_applications(uint8_t channel_mask);
 
 uint8_t cmd_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_message);
 uint8_t cmd_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_message);
@@ -33,6 +43,11 @@ uint8_t cmd_cs(uint8_t sa, uint8_t channel_mask, const char *input);
 uint8_t cmd_cs_write(uint8_t sa, uint8_t channel_mask, const char *input);
 uint8_t cmd_mr(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
 uint8_t cmd_mw(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_count, uint8_t *bit_per_address, uint8_t *address_increments, char const **error_message);
+uint8_t cmd_la(uint8_t channel_mask);
+uint8_t cmd_app_begin(uint8_t app_id, uint8_t channel_mask);
+uint8_t cmd_app_end(uint8_t channel_mask);
+uint8_t cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input);
+uint8_t cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input);
 
 uint8_t cmd_is(uint8_t sa, uint8_t drv, uint8_t *is_ok, char const **error_message);
 uint8_t cmd_tear_down(uint8_t sa);

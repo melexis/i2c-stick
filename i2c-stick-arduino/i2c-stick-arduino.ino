@@ -139,9 +139,9 @@ hal_write_pin(uint8_t pin, uint8_t state)
 
 
 uint8_t
-hal_read_pin(uint8_t pin, uint8_t pullup)
+hal_read_pin(uint8_t pin)
 {
-  pinMode(pin, pullup ? INPUT_PULLUP : INPUT);
+  pinMode(pin, INPUT);
   return digitalRead(pin);
 }
 
@@ -354,7 +354,7 @@ loop()
   {
     handle_continuous_mode();
   }
-  handle_applications();
+  handle_applications(g_channel_mask);
 }
 
 
@@ -398,14 +398,6 @@ void msc_flush_cb (void)
 
 #endif // ENABLE_USB_MSC
 
-
-
-
-void
-handle_applications()
-{
-  //uint8_t channel_mask = 0xFF;
-}
 
 uint16_t
 int_uart()

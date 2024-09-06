@@ -266,7 +266,7 @@ cmd_90632_cs(uint8_t sa, uint8_t channel_mask, const char *input)
   if (mode == MLX90632_REG_MODE_HALT) p = "(HALT)";
   if (mode == MLX90632_REG_MODE_SLEEPING_STEP) p = "(SLEEPING_STEP)";
   if (mode == MLX90632_REG_MODE_STEP) p = "(STEP)";
-  if (mode == MLX90632_REG_MODE_CONTINIOUS) p = "(CONTINIOUS)";
+  if (mode == MLX90632_REG_MODE_CONTINUOUS) p = "(CONTINUOUS)";
 
   send_answer_chunk(channel_mask, "cs:", 0);
   uint8_to_hex(buf, sa);

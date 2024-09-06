@@ -1,0 +1,20 @@
+#ifndef _{{app.name}}_CMD_
+#define _{{app.name}}_CMD_
+
+#include <stdint.h>
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
+uint8_t cmd_{{app.function_id}}_app_begin(uint8_t channel_mask);
+void handle_{{app.function_id}}_app(uint8_t channel_mask);
+uint8_t cmd_{{app.function_id}}_app_end(uint8_t channel_mask);
+void cmd_{{app.function_id}}_ca(uint8_t channel_mask, const char *input);
+void cmd_{{app.function_id}}_ca_write(uint8_t channel_mask, const char *input);
+
+#ifdef  __cplusplus
+}
+#endif
+
+#endif

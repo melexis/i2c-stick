@@ -423,7 +423,7 @@ cmd_{{driver.function_id}}_mw(uint8_t sa, uint16_t *mem_data, uint16_t mem_start
 
 void
 cmd_{{driver.function_id}}_is(uint8_t sa, uint8_t *is_ok, char const **error_message)
-{ // function to call prior any init, only to check is the connected slave IS a MLX90614.
+{ // function to call prior any init, only to check is the connected slave IS a {{driver.name}}.
   uint16_t value;
   *is_ok = 1; // be optimistic!
 
@@ -436,10 +436,11 @@ cmd_{{driver.function_id}}_is(uint8_t sa, uint8_t *is_ok, char const **error_mes
 
   // remember there is no communication initiated yet...
 
-  // in this ecample below for MLX90614 we check if the EEPROM reads the slave address at address 0x2E...
+  // in this example below we check if the EEPROM reads the slave address at address 0x2E,
+  // and check if that fits with the currently SA in use!
 
-//  MLX90614_SMBusInit();
-//  if (MLX90614_SMBusRead(sa, 0x2E, &value) < 0)
+//  {{driver.name}}_I2CInit();
+//  if ({{driver.name}}_I2cRead(sa, 0x2E, &value) < 0)
   {
     *error_message = {{driver.name}}_ERROR_COMMUNICATION;
     *is_ok = 0;

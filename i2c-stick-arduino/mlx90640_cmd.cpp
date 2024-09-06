@@ -11,7 +11,6 @@
 #include <math.h>
 
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -274,6 +273,7 @@ cmd_90640_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_
   {
     mv_list[pix+1] = mlx->to_list_[pix];
   }
+
   mlx->flags_ |= (1U<<MLX90640_CMD_FLAG_IS_INIT);
 }
 

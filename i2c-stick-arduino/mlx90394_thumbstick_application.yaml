@@ -1,0 +1,4 @@
+function_id: '90394_thumbstick'
+name: MLX90394_THUMBSTICK
+src_name: mlx90394_thumbstick
+disable: 0

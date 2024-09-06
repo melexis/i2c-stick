@@ -39,6 +39,8 @@ var spatial_previous_orientation = 0;
 var connected_slaves = {};
 var heat_map_gradient_colors = null;
 
+var thumbstick_max_deflection = 2;
+
 
 function set_terminal_height()
 {
@@ -96,6 +98,10 @@ $(window).resize(function() {
 });
 
 $(document).ready(function () {
+  $(".btn_console_clear").click(function () {
+    $("#console").html("");
+  });
+
 // navigation bar
   $(".navbar-burger").click(function () {
     $(".navbar-burger").toggleClass('is-active');
@@ -381,7 +387,7 @@ $(document).ready(function () {
     let term = $("#serial_terminal");
 
     let term_html = term.html();
-    if (term_html.length > 50000)
+    if (term_html.length > 10000)
     {
         term.empty();
         term.append("<br>");
@@ -577,6 +583,91 @@ $(document).ready(function () {
       }
     }
   }, false);
+
+
+  // thumbstick updater
+  div.addEventListener('receive_line', (e) => {
+    if ($("#tab_int_thumbstick").hasClass("is-active"))
+    {
+      let line = e.detail;
+
+      if (line.startsWith ("#"))
+      { // update chart
+        //#1:<sa>:<time>:<x>,<y>,<z>,<t>,<heading>,<deflect>
+        //#1:60:00214504:-7602,-6332,13911,1287,230.208,35.421
+        let items = line.slice(start).split(":");
+        let app_id = items[0];
+        let sa = items[1];
+        let time = items[2];
+        let values = items[3].split(",");
+        time = Number(time) / 1000;
+        for (let i=0; i<values.length; i++)
+        {
+          values[i] = Number(values[i]);
+        }
+        //console.log(values);
+        let c = document.getElementById("thumbstick_chart");
+        let ctx = c.getContext('2d');
+        ctx.clearRect(0, 0, c.width, c.height);
+
+				ctx.strokeStyle = mlx_electric_green;
+				ctx.fillStyle = mlx_electric_green;
+
+        ctx.font = "18px Arial";
+        ctx.fillText("Bx: " + values[0].toString() + " LSB", 10, 40);
+        ctx.fillText("By: " + values[1].toString() + " LSB", 10, 80);
+        ctx.fillText("Bz: " + values[2].toString() + " LSB", 10, 120);
+        ctx.fillText("T : " + values[3].toString() + " LSB", 10, 160);
+        ctx.fillText("Heading   : " + values[4].toString() + " Degree",10, 200);
+        ctx.fillText("Deflection: " + values[5].toString() + " Degree",10, 240);
+
+        let x = values[0];
+        let y = values[1];
+        let z = values[2];
+        let t = values[3];
+        let heading = values[4];
+        let deflection = values[5];
+
+
+				ctx.lineWidth = 1;
+				ctx.globalAlpha = 0.2;
+				ctx.strokeStyle = mlx_charcoal_grey;
+				ctx.setLineDash([2, 2]);
+
+				ctx.beginPath();
+				ctx.moveTo(100, 300);
+				ctx.lineTo(700, 300);
+				ctx.stroke();
+
+				ctx.beginPath();
+				ctx.moveTo(400, 50);
+				ctx.lineTo(400, 550);
+				ctx.stroke();
+
+				ctx.globalAlpha = 1.0;
+				ctx.strokeStyle = mlx_coral_red;
+				ctx.fillStyle = mlx_coral_red;
+				ctx.setLineDash([]);
+
+				if (deflection > thumbstick_max_deflection)
+				{
+					thumbstick_max_deflection = deflection;
+				}
+				let radius = 200 * deflection / thumbstick_max_deflection;
+
+				let c_x = radius * Math.cos(heading * (Math.PI / 180));
+				let c_y = radius * Math.sin(heading * (Math.PI / 180));
+
+//				console.log(c_x, c_y, 400+c_x, 300+c_y, 20, 0, 2 * Math.PI);
+
+				ctx.beginPath();
+				ctx.arc(400+c_x, 300+c_y, 20, 0, 2 * Math.PI);
+				ctx.closePath();
+				ctx.fill();
+
+      }
+    }
+  });
 
 
   // spatial chart updater
@@ -953,6 +1044,17 @@ $(document).ready(function () {
       });
       new_div.appendTo("#spatial_chart_slaves");
 
+        new_div = $($(".slave_spatial_chart").html()).attr("data-sa", sa);
+        new_div.children(".btn_config").text("@"+sa+":"+device);
+        new_div.children("slave_enable").prop('checked', disabled ? false : true);
+        new_div.children("button.button.cmd").one('click', function () {
+          button_action(this);
+        });
+        new_div.children("input.slave_enable").change(function () {
+          checkbox_slave_enable(this);
+        });
+        new_div.appendTo("#thumbstick_chart_slaves");
+
       new_div = $($(".slave_terminal").html()).attr("data-sa", sa);
       new_div.children(".btn_config").text("@"+sa+":"+device);
       new_div.children(".slave_enable").prop('checked', disabled ? false : true);
@@ -1119,6 +1221,7 @@ $(document).ready(function () {
       $("#terminal_slaves").html(""); // empty slave buttons
       $("#transient_chart_slaves").html(""); // empty slave buttons
       $("#spatial_chart_slaves").html(""); // empty slave buttons
+      $("#thumbstick_chart_slaves").html(""); // empty slave buttons
     }
 
   }, false);
@@ -1309,6 +1412,9 @@ $("#lbl_selected_port").click(async () => {
   closed_promise = serial_open_and_start_reading();
 });
 
+$(".btn_app_run").click(async () => {
+	thumbstick_max_deflection = 2;
+});
 
 $("#btn_open_port").click(async () => {
   if (serial != null)

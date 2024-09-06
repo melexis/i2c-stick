@@ -704,37 +704,29 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     return NULL;
   }
 
-  this_cmd = "pin"; // Pin command
+  this_cmd = "pinval"; // Pin value command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t pin_no = -1;
+    int16_t pin_num = -1;
     if (cmd[strlen(this_cmd)] == ':')
     {
       const char *p = cmd+strlen(this_cmd)+1;
       if (('0' <= *p) && (*p <= '9'))
       {
-        pin_no = atoi(p);
+        pin_num = atoi(p);
       }
     }
-    if (pin_no >= 0)
+    if (pin_num >= 0)
     {
       const char *p = strchr(cmd+strlen(this_cmd)+1, ':');
-      int16_t value = -1;
+      int16_t pval = -1;
       if (p)
       {
-        value = atoi(p+1);
-      } else
-      {
-        value = hal_read_pin(pin_no, strchr(cmd+strlen(this_cmd)+1, '+') ? 1 : 0);
-        char buf[32];
-        sprintf(buf, ":%d:read:%d", pin_no, value);
-        send_answer_chunk(channel_mask, this_cmd, 0);
-        send_answer_chunk(channel_mask, buf, 1);
-        return NULL;
+        pval = atoi(p+1);
       }
-      if ((value == 0) || (value == 1))
+      if ((pval == 0) || (pval == 1))
       {
-        hal_write_pin(pin_no, value);
+        hal_write_pin(pin_num, pval);
         send_answer_chunk(channel_mask, this_cmd, 0);
         send_answer_chunk(channel_mask, ":OK", 1);
       } else
@@ -745,7 +737,7 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     } else
     {
       send_answer_chunk(channel_mask, this_cmd, 0);
-      send_answer_chunk(channel_mask, ":FAIL:invalid pin_no", 1);
+      send_answer_chunk(channel_mask, ":FAIL:pwm invalid pin_num", 1);
     }
     return NULL;
   }
@@ -945,16 +937,32 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
     return NULL;
   }
 
+  this_cmd = "la"; // List Applications command
+  if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
+  {
+    cmd_la(channel_mask);
+    return NULL;
+  }
 
   this_cmd = "ca"; // Config Application command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t app_id = atohex8(cmd+strlen(this_cmd));
-    if (app_id < 0)
+    int16_t app_id = g_app_id;
+    uint8_t i = strlen(this_cmd);
+    if (cmd[i] == ':')
     {
-      app_id = g_app_id;
+      i++;
+      app_id = atoi(cmd+i);
     }
-    uint8_t i = 0;
+
+    if ((app_id < 0) || (app_id >= 256))
+    {
+      send_answer_chunk(channel_mask, cmd, 0);
+      send_answer_chunk(channel_mask, ":FAILED (invalid APP id)", 1);
+      return NULL;
+    }
+
+
     for (; i<strlen(cmd); i++)
     {
       if (cmd[i] == ':')
@@ -993,30 +1001,48 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   this_cmd = "app"; // APPlication command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
+    int16_t app_id = g_app_id;
+    if (cmd[strlen(this_cmd)] == ':')
+    {
+      app_id = atoi(cmd+strlen(this_cmd)+1);
+    }
+
     send_answer_chunk(channel_mask, "app:", 0);
     char buf[8]; memset(buf, 0, sizeof(buf));
-    uint8_to_hex(buf, g_app_id);
-    send_answer_chunk(channel_mask, buf, 1);
+    itoa(app_id, buf, 10);
+    send_answer_chunk(channel_mask, buf, 0);
+    if (app_id == APP_NONE)
+    {
+      send_answer_chunk(channel_mask, ":None", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":", 0);
+      send_answer_chunk(channel_mask, i2c_stick_get_app_name(app_id), 1);
+    }
     return NULL;
   }
 
   this_cmd = "+app:"; // APPlication command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t app_id = atohex8(cmd+strlen(this_cmd));
+    int16_t app_id = atoi(cmd+strlen(this_cmd));
 
-    send_answer_chunk(channel_mask, "+app:", 0);
+    send_answer_chunk(channel_mask, "+app", 0);
 
-    if (app_id < 0)
+    if ((app_id < 0) || (app_id >= 256))
     {
-      send_answer_chunk(channel_mask, "FAILED", 1);
+      send_answer_chunk(channel_mask, ":FAILED (invalid APP id)", 1);
     } else
     {
-      g_app_id = app_id;
-      char buf[8]; memset(buf, 0, sizeof(buf));
-      uint8_to_hex(buf, app_id);
-      send_answer_chunk(channel_mask, buf, 0);
-      send_answer_chunk(channel_mask, ":STARTED", 1);
+      if (g_app_id != app_id)
+      {
+        if (g_app_id != APP_NONE)
+        { // end the previous app
+          cmd_app_end(channel_mask);
+        }
+      }
+      // begin the new app
+      g_app_id = cmd_app_begin(app_id, channel_mask);
     }
     return NULL;
   }
@@ -1030,7 +1056,7 @@ handle_cmd_mv(uint8_t sa, uint8_t channel_mask)
 {
   float mv_list[768+1];
   uint16_t mv_count = sizeof(mv_list)/sizeof(mv_list[0]);
-  char buf[16];
+  char buf[20];
   const char *error_message = NULL;
   uint32_t time_stamp = hal_get_millis();
 
@@ -1077,7 +1103,7 @@ handle_cmd_mv(uint8_t sa, uint8_t channel_mask)
     for (int16_t i=0; i<mv_count; i++)
     {
       memset(buf, 0, sizeof(buf));
-      const char *p = my_dtostrf(mv_list[i], 10, 2, buf);
+      const char *p = my_dtostrf(mv_list[i], 14, 2, buf);
       while (*p == ' ') p++; // remove leading space
       if ((p - buf) > 10) p = "NaN"; // should never ever happen!
 
@@ -1860,36 +1886,6 @@ cmd_ch_write(uint8_t channel_mask, const char *input)
 }
 
 // end of host only commands
-
-uint8_t
-cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input)
-{
-  switch(app_id)
-  {
-    case APP_NONE:
-      break;
-    default:
-      return 0;
-  }
-  return app_id;
-}
-
-
-uint8_t
-cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input)
-{
-  // 1. all is specific for each application
-  switch(app_id)
-  {
-    case APP_NONE:
-      break;
-    default:
-      return 0;
-  }
-  return app_id;
-}
-
-
 
 void
 handle_cmd_sos(uint8_t channel_mask, const char *input)

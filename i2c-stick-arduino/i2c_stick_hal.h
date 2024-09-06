@@ -20,7 +20,7 @@ int16_t hal_i2c_direct_write(uint8_t sa, uint8_t *write_buffer, uint16_t write_n
 int16_t hal_i2c_indirect_read(uint8_t sa, uint8_t *write_buffer, uint16_t write_n_bytes, uint8_t *read_buffer, uint16_t read_n_bytes);
 
 void hal_write_pin(uint8_t pin, uint8_t state);
-uint8_t hal_read_pin(uint8_t pin, uint8_t pullup = false);
+uint8_t hal_read_pin(uint8_t pin);
 
 void hal_i2c_set_pwm(uint8_t pin_no, uint8_t pwm);
 

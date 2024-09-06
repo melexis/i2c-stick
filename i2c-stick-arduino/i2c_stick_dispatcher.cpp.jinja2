@@ -11,6 +11,11 @@
 #include "{{driver.src_name}}_cmd.h"
 {%- endfor %}
 
+// Include all the applications header files:
+{%- for app in applications %}
+#include "{{app.src_name}}_app.h"
+{%- endfor %}
+
 #include <string.h>
 #include <stdlib.h>
 
@@ -50,6 +55,31 @@ i2c_stick_get_drv_by_drv_name(const char *drv_name)
   return 0;
 }
 
+
+const char*
+i2c_stick_get_app_name(uint8_t app_id)
+{
+  switch(app_id)
+  {
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      return APP_{{app.name}}_NAME;
+{%- endfor %}
+    default:
+      if (app_id) {}
+  }
+  return "Unassigned";
+}
+
+
+uint8_t
+i2c_stick_get_app_id(const char *app_name)
+{
+{%- for app in applications %}
+  if (!strcasecmp(app_name, APP_{{app.name}}_NAME)) return APP_{{app.name}}_ID;
+{%- endfor %}
+  return APP_NONE;
+}
 
 
 // command functions.
@@ -338,3 +368,140 @@ cmd_tear_down(uint8_t sa)
   }
   return drv;
 }
+
+
+uint8_t
+cmd_la(uint8_t channel_mask)
+{
+  uint8_t count = 0;
+  char buf[16]; memset(buf, 0, sizeof(buf));
+
+{%- for app in applications %}
+  send_answer_chunk(channel_mask, "la:", 0);
+  itoa(APP_{{app.name}}_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":" APP_{{app.name}}_NAME, 1);
+  count++;
+{%- endfor %}
+
+  if (count == 0)
+  {
+    send_answer_chunk(channel_mask, "la:FAILED (no applications registered)", 1);
+  }
+
+  return count;
+}
+
+
+uint8_t
+cmd_app_begin(uint8_t app_id, uint8_t channel_mask)
+{
+  char buf[32];
+  switch(app_id)
+  {
+    case APP_NONE:
+      send_answer_chunk(channel_mask, ":", 0);
+      itoa(APP_NONE, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":OK", 1);
+      break;
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      return cmd_{{app.function_id}}_app_begin(channel_mask);
+{%- endfor %}
+    default:
+      send_answer_chunk(channel_mask, ":", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (no registered app id)", 1);
+      break;
+  }
+  return APP_NONE;
+}
+
+
+uint8_t
+cmd_app_end(uint8_t channel_mask)
+{
+  switch(g_app_id)
+  {
+    case APP_NONE:
+      break;
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      cmd_{{app.function_id}}_app_end(channel_mask);
+      g_app_id = APP_NONE;
+      break;
+{%- endfor %}
+    default:
+      break;
+  }
+  return APP_NONE;
+}
+
+
+void
+handle_applications(uint8_t channel_mask)
+{
+  switch(g_app_id)
+  {
+    case APP_NONE:
+      break;
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      handle_{{app.function_id}}_app(channel_mask);
+      break;
+{%- endfor %}
+    default:
+      break;
+  }
+}
+
+
+uint8_t
+cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input)
+{
+  char buf[16]; memset(buf, 0, sizeof(buf));
+  switch(app_id)
+  {
+    case APP_NONE:
+      send_answer_chunk(channel_mask, "ca:", 0);
+      itoa(APP_NONE, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":none", 1);
+      break;
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      cmd_{{app.function_id}}_ca(channel_mask, input);
+      break;
+{%- endfor %}
+    default:
+      send_answer_chunk(channel_mask, "ca:", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (unregistered app id)", 1);
+      return APP_NONE;
+  }
+  return app_id;
+}
+
+
+uint8_t
+cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input)
+{
+  // 1. all is specific for each application
+  switch(app_id)
+  {
+    case APP_NONE:
+      break;
+{%- for app in applications %}
+    case APP_{{app.name}}_ID:
+      cmd_{{app.function_id}}_ca_write(channel_mask, input);
+      break;
+{%- endfor %}
+    default:
+      return 0;
+  }
+  return app_id;
+}
+

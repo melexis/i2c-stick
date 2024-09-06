@@ -4,7 +4,7 @@
 // FW Configuration
 // ****************
 
-#define FW_VERSION "V1.4.0"
+#define FW_VERSION "V1.3.15"
 
 
 // enable/disable modules

@@ -160,6 +160,7 @@ handle_task_help(uint8_t channel_mask)
   send_answer_chunk(channel_mask, "- mw   ==>  Memory Write", 1);
   send_answer_chunk(channel_mask, "- raw  ==>  RAW sensor data dump", 1);
   send_answer_chunk(channel_mask, "", 1);
+  send_answer_chunk(channel_mask, "- la   ==>  List Applications", 1);
   send_answer_chunk(channel_mask, "- app  ==>  APPlication id", 1);
   send_answer_chunk(channel_mask, "- ca   ==>  Configuration of Application", 1);
   send_answer_chunk(channel_mask, "", 1);

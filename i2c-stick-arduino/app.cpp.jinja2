@@ -1,0 +1,115 @@
+#include "{{app.src_name}}_app.h"
+#include "i2c_stick.h"
+#include "i2c_stick_dispatcher.h"
+#include "i2c_stick_cmd.h"
+#include "i2c_stick_hal.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+
+
+// Set here the slave address(SA) which the application should use by default
+// in the Configure Application command (ca), you can change the SA to be used by this app.
+static uint8_t g_sa = 0x05;
+
+
+uint8_t
+cmd_{{app.function_id}}_app_begin(uint8_t channel_mask)
+{
+  uint8_t ok = 1;
+  char buf[32];
+
+// configure the slave for the {{app.name}} app (and set ok=0 in case it fails).
+
+  if (ok)
+  {
+    send_answer_chunk(channel_mask, ":", 0);
+    itoa(APP_{{app.name}}_ID, buf, 10);
+    send_answer_chunk(channel_mask, buf, 0);
+    send_answer_chunk(channel_mask, ":OK", 1);
+  }
+  else // when failed..
+  {
+    send_answer_chunk(channel_mask, ":", 0);
+    itoa(APP_{{app.name}}_ID, buf, 10);
+    send_answer_chunk(channel_mask, buf, 0);
+    send_answer_chunk(channel_mask, ":FAILED (app not started)", 1);
+    return APP_NONE;
+  }
+
+
+// potentially disable the mlx90394 for emitting results in the continuous mode.
+
+  return APP_{{app.name}}_ID;
+}
+
+
+void
+handle_{{app.function_id}}_app(uint8_t channel_mask)
+{
+  static uint32_t prev_time = hal_get_millis();
+  char buf[32]; memset(buf, 0, sizeof(buf));
+  if (hal_get_millis() - prev_time > 100) /* this is an example code to check-in every 100ms with the sensor. */
+  {
+    // reset the timer
+    prev_time = hal_get_millis();
+
+    // all apps responds back to the communication channel on its own, therefore we start it ALWAYS with a hastag '#'
+    // the format is:
+    // #<app-id>:<value0>,<value1>,...,<valuen>
+    // value can be integer format or floating point format.
+    send_answer_chunk(channel_mask, "#", 0);
+    itoa(APP_{{app.name}}_ID, buf, 10);
+    send_answer_chunk(channel_mask, buf, 0);
+
+    // read sensor values
+    int raw_value = 1234;
+
+    // process sensor values as one would do in the application.
+    float processed_value = raw_value;
+    processed_value /= 100;
+
+
+    // report the results
+    send_answer_chunk(channel_mask, ":", 0); // remember the first separator is ':', after it is only ','!
+    itoa(raw_value, buf, 10); // note: replace
+    send_answer_chunk(channel_mask, buf, 0);
+
+    send_answer_chunk(channel_mask, ",", 0);
+    sprintf(buf, "%5.3f", processed_value);
+    send_answer_chunk(channel_mask, buf, 1); // only the last line will terminate the communication line.
+
+  }
+
+}
+
+
+uint8_t
+cmd_{{app.function_id}}_app_end(uint8_t channel_mask)
+{
+  char buf[32];
+  send_answer_chunk(channel_mask, ":ENDING:", 0);
+  itoa(APP_{{app.name}}_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+
+  return APP_NONE;
+}
+
+
+void
+cmd_{{app.function_id}}_ca(uint8_t channel_mask, const char *input)
+{
+  char buf[16]; memset(buf, 0, sizeof(buf));
+  send_answer_chunk(channel_mask, "ca:", 0);
+  itoa(APP_{{app.name}}_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":SA=", 0);
+  uint8_to_hex(buf, g_sa);
+  send_answer_chunk(channel_mask, buf, 1);
+}
+
+
+void
+cmd_{{app.function_id}}_ca_write(uint8_t channel_mask, const char *input)
+{
+}

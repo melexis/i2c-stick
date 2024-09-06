@@ -7,10 +7,14 @@
 #include "i2c_stick_cmd.h"
 
 // Include all the drivers cmd header files:
+#include "mlx90394_cmd.h"
 #include "mlx90614_cmd.h"
 #include "mlx90632_cmd.h"
 #include "mlx90640_cmd.h"
 #include "mlx90641_cmd.h"
+
+// Include all the applications header files:
+#include "mlx90394_thumbstick_app.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -19,6 +23,7 @@ int16_t
 i2c_stick_register_all_drivers()
 {
   int16_t result = 1;
+  if (cmd_90394_register_driver() < 0) result = -1;
   if (cmd_90614_register_driver() < 0) result = -1;
   if (cmd_90632_register_driver() < 0) result = -1;
   if (cmd_90640_register_driver() < 0) result = -1;
@@ -32,6 +37,8 @@ i2c_stick_get_drv_name_by_drv(uint8_t drv)
 {
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      return DRV_MLX90394_NAME;
     case DRV_MLX90614_ID:
       return DRV_MLX90614_NAME;
     case DRV_MLX90632_ID:
@@ -50,6 +57,7 @@ i2c_stick_get_drv_name_by_drv(uint8_t drv)
 uint8_t
 i2c_stick_get_drv_by_drv_name(const char *drv_name)
 {
+  if (!strcasecmp(drv_name, DRV_MLX90394_NAME)) return DRV_MLX90394_ID;
   if (!strcasecmp(drv_name, DRV_MLX90614_NAME)) return DRV_MLX90614_ID;
   if (!strcasecmp(drv_name, DRV_MLX90632_NAME)) return DRV_MLX90632_ID;
   if (!strcasecmp(drv_name, DRV_MLX90640_NAME)) return DRV_MLX90640_ID;
@@ -57,6 +65,27 @@ i2c_stick_get_drv_by_drv_name(const char *drv_name)
   return 0;
 }
 
+
+const char*
+i2c_stick_get_app_name(uint8_t app_id)
+{
+  switch(app_id)
+  {
+    case APP_MLX90394_THUMBSTICK_ID:
+      return APP_MLX90394_THUMBSTICK_NAME;
+    default:
+      if (app_id) {}
+  }
+  return "Unassigned";
+}
+
+
+uint8_t
+i2c_stick_get_app_id(const char *app_name)
+{
+  if (!strcasecmp(app_name, APP_MLX90394_THUMBSTICK_NAME)) return APP_MLX90394_THUMBSTICK_ID;
+  return APP_NONE;
+}
 
 
 // command functions.
@@ -72,6 +101,9 @@ cmd_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_messag
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_mv(sa, mv_list, mv_count, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_mv(sa, mv_list, mv_count, error_message);
       break;
@@ -102,6 +134,9 @@ cmd_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_raw(sa, raw_list, raw_count, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_raw(sa, raw_list, raw_count, error_message);
       break;
@@ -132,6 +167,9 @@ cmd_nd(uint8_t sa, uint8_t *nd, char const **error_message)
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_nd(sa, nd, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_nd(sa, nd, error_message);
       break;
@@ -162,6 +200,9 @@ cmd_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **error_mes
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_sn(sa, sn_list, sn_count, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_sn(sa, sn_list, sn_count, error_message);
       break;
@@ -203,6 +244,9 @@ cmd_cs(uint8_t sa, uint8_t channel_mask, const char *input)
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_cs(sa, channel_mask, input);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_cs(sa, channel_mask, input);
       break;
@@ -266,6 +310,9 @@ cmd_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_cs_write(sa, channel_mask, input);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_cs_write(sa, channel_mask, input);
       break;
@@ -296,6 +343,9 @@ cmd_mr(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
@@ -327,6 +377,9 @@ cmd_mw(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
@@ -358,6 +411,9 @@ cmd_is(uint8_t sa, uint8_t drv, uint8_t *is_ok, char const **error_message)
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_is(sa, is_ok, error_message);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_is(sa, is_ok, error_message);
       break;
@@ -398,6 +454,9 @@ cmd_tear_down(uint8_t sa)
 
   switch(drv)
   {
+    case DRV_MLX90394_ID:
+      cmd_90394_tear_down(sa);
+      break;
     case DRV_MLX90614_ID:
       cmd_90614_tear_down(sa);
       break;
@@ -414,4 +473,127 @@ cmd_tear_down(uint8_t sa)
       return 0;
   }
   return drv;
+}
+
+
+uint8_t
+cmd_la(uint8_t channel_mask)
+{
+  uint8_t count = 0;
+  char buf[16]; memset(buf, 0, sizeof(buf));
+  send_answer_chunk(channel_mask, "la:", 0);
+  itoa(APP_MLX90394_THUMBSTICK_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":" APP_MLX90394_THUMBSTICK_NAME, 1);
+  count++;
+
+  if (count == 0)
+  {
+    send_answer_chunk(channel_mask, "la:FAILED (no applications registered)", 1);
+  }
+
+  return count;
+}
+
+
+uint8_t
+cmd_app_begin(uint8_t app_id, uint8_t channel_mask)
+{
+  char buf[32];
+  switch(app_id)
+  {
+    case APP_NONE:
+      send_answer_chunk(channel_mask, ":", 0);
+      itoa(APP_NONE, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":OK", 1);
+      break;
+    case APP_MLX90394_THUMBSTICK_ID:
+      return cmd_90394_thumbstick_app_begin(channel_mask);
+    default:
+      send_answer_chunk(channel_mask, ":", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (no registered app id)", 1);
+      break;
+  }
+  return APP_NONE;
+}
+
+
+uint8_t
+cmd_app_end(uint8_t channel_mask)
+{
+  switch(g_app_id)
+  {
+    case APP_NONE:
+      break;
+    case APP_MLX90394_THUMBSTICK_ID:
+      cmd_90394_thumbstick_app_end(channel_mask);
+      g_app_id = APP_NONE;
+      break;
+    default:
+      break;
+  }
+  return APP_NONE;
+}
+
+
+void
+handle_applications(uint8_t channel_mask)
+{
+  switch(g_app_id)
+  {
+    case APP_NONE:
+      break;
+    case APP_MLX90394_THUMBSTICK_ID:
+      handle_90394_thumbstick_app(channel_mask);
+      break;
+    default:
+      break;
+  }
+}
+
+
+uint8_t
+cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input)
+{
+  char buf[16]; memset(buf, 0, sizeof(buf));
+  switch(app_id)
+  {
+    case APP_NONE:
+      send_answer_chunk(channel_mask, "ca:", 0);
+      itoa(APP_NONE, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":none", 1);
+      break;
+    case APP_MLX90394_THUMBSTICK_ID:
+      cmd_90394_thumbstick_ca(channel_mask, input);
+      break;
+    default:
+      send_answer_chunk(channel_mask, "ca:", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (unregistered app id)", 1);
+      return APP_NONE;
+  }
+  return app_id;
+}
+
+
+uint8_t
+cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input)
+{
+  // 1. all is specific for each application
+  switch(app_id)
+  {
+    case APP_NONE:
+      break;
+    case APP_MLX90394_THUMBSTICK_ID:
+      cmd_90394_thumbstick_ca_write(channel_mask, input);
+      break;
+    default:
+      return 0;
+  }
+  return app_id;
 }

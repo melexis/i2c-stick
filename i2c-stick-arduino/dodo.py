@@ -70,16 +70,43 @@ for driver in context['drivers']:
 # remove the disabled drivers
 context['drivers'] = [driver for driver in context['drivers'] if driver['disable'] == 0]
 
+for index, driver in enumerate(context['drivers']):
+    driver['id'] = index + 1
+
+
+# APPLICATIONS
+for app in context['applications']:
+    if 'disable' not in app:
+        app['disable'] = 0
+
+# Arduino compiles all cpp files in the directory; rename to <ori>.disable
+for app in context['applications']:
+    if app['disable']:
+        files = list(Path(".").glob(app['src_name'] + "_*.cpp")) + list(Path(".").glob(app['src_name'] + "_*.h"))
+        for file in files:
+            shutil.move(file, str(file) + ".disable")
+
+# undo: Arduino compiles all cpp files in the directory; rename to <ori>.disable
+for app in context['applications']:
+    if app['disable'] == 0:
+        files = list(Path(".").glob(app['src_name'] + "_*.disable"))
+        for file in files:
+            shutil.move(file, str(file).replace(".disable", ""))
+
+# remove the disabled applications
+context['applications'] = [app for app in context['applications'] if app['disable'] == 0]
+
+for index, app in enumerate(context['applications']):
+    app['id'] = index + 1
+
+
 # remove the disabled boards
 for board in context['boards']:
     if 'disable' not in board:
         board['disable'] = 0
 
 context['boards'] = [board for board in context['boards'] if board['disable'] == 0]
-
-for index, driver in enumerate(context['drivers']):
-    driver['id'] = index + 1
-
+	
 arduino_add_url = " ".join(["--additional-urls {}".format(x) for x in context['board_manager']['additional-urls']])
 
 ARDUINO_CLI = os.path.join('tools', 'arduino-cli' + Path(sys.executable).suffix)
@@ -474,6 +501,8 @@ def task_arduino_upload():
                     if p.vid == vid:
                         if p.pid == pid:
                             filtered_ports.append(p)
+                if len(filtered_ports) <= 0:
+                    return "echo no compatible comport found"
                 port = filtered_ports[0].name
 
             if method == 'arduino-cli':
@@ -683,6 +712,98 @@ def task_add_driver():
         'verbosity': 2,
     }
 
+
+def task_add_app():
+    """Add a templated entry for a new driver for a sensor to the framework"""
+
+    def do_generate(template, output, data):
+        yamlinclude.YamlIncludeConstructor.add_to_loader_class(loader_class=yaml.FullLoader, base_dir=this_dir)
+        loader = jinja2.FileSystemLoader(this_dir)
+
+        env = jinja2.Environment(
+            loader=loader,
+            autoescape=jinja2.select_autoescape()
+        )
+
+        tpl = env.get_template(template)
+        print("output:", output)
+        with open(output, 'w') as output_f:
+            output_f.write(tpl.render(data))
+            output_f.write("\n")
+
+    def do_add_app(app, src_name, function_id):
+        if app is None:
+            print("Please provide parameters about the application")
+            print("Run 'doit info add-app' for more information")
+            return
+        if src_name is None:
+            src_name = app.lower()
+        if function_id is None:
+            if src_name.startswith('mlx'):
+                function_id = src_name[3:]
+        if function_id is None:
+            print("Please provide parameters about the application")
+            print("Run 'doit info add-app' for more information")
+            return
+
+        app_data = {'app': {
+            'name': app,
+            'src_name': src_name,
+            'function_id': function_id
+            },
+        }
+
+        for appli in context['applications']:
+            if appli['name'] == app:
+                print("ERROR: App '{}' already exists;".format(appli))
+                return
+
+        do_generate("app.h.jinja2", "{}_app.h".format(src_name), app_data)
+        do_generate("app.cpp.jinja2", "{}_app.cpp".format(src_name), app_data)
+        # now update the context.yaml file!
+
+        yaml_file = src_name+"_application.yaml"
+        print("output:", yaml_file)
+        with open(yaml_file, 'w') as output_f:
+            output_f.write(yaml.dump({
+                'name': app,
+                'src_name': src_name,
+                'function_id': function_id,
+            }))
+            output_f.write("\n")
+
+        # and finally re-generate the dispatcher for the newly added driver.
+        # from doit.doit_cmd import DoitMain
+        # DoitMain().run(["--always", "generate:i2c_stick_dispatcher.h"])
+        # DoitMain().run(["--always", "generate:i2c_stick_dispatcher.cpp"])
+
+    return {
+        'basename': 'add-app',
+        'actions': [(do_add_app,)],
+        'file_dep': ['app.h.jinja2', 'app.cpp.jinja2'],
+        'params': [
+            {'name': 'app',
+             'short': 'd',
+             'long': 'app',
+             'type': str,
+             'default': None,
+             },
+            {'name': 'src_name',
+             'short': 's',
+             'long': 'src_name',
+             'type': str,
+             'default': None,
+             },
+            {'name': 'function_id',
+             'short': 'f',
+             'long': 'function_id',
+             'type': str,
+             'default': None,
+             },
+        ],
+        'uptodate': [False],  # make to run the task always
+        'verbosity': 2,
+    }
 
 def task_dist():
     def make_dist_dir():
