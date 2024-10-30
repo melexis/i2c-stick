@@ -7,7 +7,7 @@ So the slower the refresh rate, the longer the integration time, and consequentl
 The refresh rate can be programmed between 64 Hz and 0.5Hz meaning that the integration time can be set in a ragne from 16ms to 2 seconds.
 
 See datasheet for the noise impact: (https://melexis.com/mlx90632)
-![datasheet_refresh_rate_vs_noise.png](media/datasheet_refresh_rate_vs_noise)
+![datasheet_refresh_rate_vs_noise.png](media/datasheet_refresh_rate_vs_noise.png)
 
 
 ## The process
