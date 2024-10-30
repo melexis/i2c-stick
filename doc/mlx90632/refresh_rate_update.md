@@ -1,4 +1,4 @@
-# Procedure to update the refresh rate
+# Procedure to update the refresh rate in MLX90632
 
 ## Intro
 
@@ -9,16 +9,93 @@ The refresh rate can be programmed between 64 Hz and 0.5Hz meaning that the inte
 See datasheet for the noise impact: (https://melexis.com/mlx90632)
 ![datasheet_refresh_rate_vs_noise.png](media/datasheet_refresh_rate_vs_noise.png)
 
+The default refresh rate is `2` meaning 2 Hz.
 
-## The process
+### Important Note 
 
 The refresh rate setting resides in the EEPROM of the MLX90632. Therefore it is mandotory to select one refresh rate for your application and stick with it, as the re-programming will get you fast through the EEPROM erase/write cycles.
 
-Below is a listing from the I2C Stick console where I took one MLX90632, starting with the default refresh rate, then I erase both 24E1 and 24E2 addresses, then I write the new content.
+
+## I2C Stick
+
+As of writing this document the website has no UI to support refresh update.  
+However, the firmware does support it.
+Meaning in the console one can sent a Configure Slave(cs) commands to set the refresh rate of the MLX90632, and after the update the sensor, as well as the plot will update according the selected refresh rate.
+
+Below is a listing from the I2C Stick console where we take one MLX90632, starting with the default refresh rate, then I erase both 24E1 and 24E2 addresses, then I write the new content.
 
 The `<-` sign indicates that what I entered in the console, while the `->` sign indicates the answer from the I2C Stick (and thus indirectly what MLX90632 answers on the I2C bus).
 
-First let's start with how the I2C Stick command for I2C looks like: (please don't be bothered too much with the syntax, this is background, and is I2C Stick specific, not related to MLX90632)
+Let's start with listing the current configuration of the attached MLX90632:  
+```
+2024/10/30 14:01:28.454 <- cs:3A
+2024/10/30 14:01:28.456 -> cs:3A:RAW=0
+2024/10/30 14:01:28.458 -> cs:3A:SA=3A
+2024/10/30 14:01:28.458 -> cs:3A:RR=2
+2024/10/30 14:01:28.459 -> cs:3A:EM=1.000
+2024/10/30 14:01:28.460 -> cs:3A:Ha=1.000
+2024/10/30 14:01:28.461 -> cs:3A:Hb=0.000
+2024/10/30 14:01:28.462 -> cs:3A:MODE=3(CONTINIOUS)
+2024/10/30 14:01:28.462 -> cs:3A:MEAS_SELECT=0
+2024/10/30 14:01:28.463 -> cs:3A:RO:MV_HEADER=TA,TO
+2024/10/30 14:01:28.464 -> cs:3A:RO:MV_UNIT=DegC,DegC
+2024/10/30 14:01:28.464 -> cs:3A:RO:MV_RES=128,128
+2024/10/30 14:01:28.465 -> cs:3A:RO:EE_VERSION=0x8505
+2024/10/30 14:01:28.466 -> cs:3A:RO:ACC=1(Medical)
+2024/10/30 14:01:28.467 -> cs:3A:RO:I2C=0(3V3)
+```
+
+Abbreviations:  
+- RR = Refresh Rate
+- RO = Read Only
+- EM = Emissivity
+- ACC = Accuracy
+- SA = 7-bit Slave Address (on the I2C bus)
+
+
+Now, let's update the refresh rate
+
+```
+2024/10/30 14:03:35.217 <- +cs:3A:RR=4
+2024/10/30 14:03:35.246 -> +cs:3A:RR=OK [mlx-EE]
+```
+
+And check again:
+
+```
+2024/10/30 14:04:10.650 <- cs:3A
+2024/10/30 14:04:10.653 -> cs:3A:RAW=0
+2024/10/30 14:04:10.654 -> cs:3A:SA=3A
+2024/10/30 14:04:10.655 -> cs:3A:RR=4
+2024/10/30 14:04:10.657 -> cs:3A:EM=1.000
+2024/10/30 14:04:10.658 -> cs:3A:Ha=1.000
+2024/10/30 14:04:10.659 -> cs:3A:Hb=0.000
+2024/10/30 14:04:10.659 -> cs:3A:MODE=3(CONTINIOUS)
+2024/10/30 14:04:10.660 -> cs:3A:MEAS_SELECT=0
+2024/10/30 14:04:10.661 -> cs:3A:RO:MV_HEADER=TA,TO
+2024/10/30 14:04:10.662 -> cs:3A:RO:MV_UNIT=DegC,DegC
+2024/10/30 14:04:10.663 -> cs:3A:RO:MV_RES=128,128
+2024/10/30 14:04:10.664 -> cs:3A:RO:EE_VERSION=0x8505
+2024/10/30 14:04:10.665 -> cs:3A:RO:ACC=1(Medical)
+2024/10/30 14:04:10.666 -> cs:3A:RO:I2C=0(3V3)
+```
+
+And indeed refresh rate is now set to `4`.  
+You can now try to do it again after powercycling the MLX90632, it should still read `4`!
+
+
+### I2C Stick demo firmware
+
+See the function `_mlx90632_ee_write_refresh_rate`:  
+https://github.com/melexis/i2c-stick/blob/main/i2c-stick-arduino/mlx90632_api.cpp#L335
+
+And the function `_mlx90632_ee_write`:  
+https://github.com/melexis/i2c-stick/blob/main/i2c-stick-arduino/mlx90632_api.cpp#L335
+
+
+## The process at I2C level
+
+First let's start with how the I2C Stick command for I2C looks like: (note this is I2C Stick firmware related; so not linked with MLX90632!)
 ```
 2024/10/29 09:36:32.771 <- sos:i2c
 2024/10/29 09:36:32.773 -> I2C command format:
@@ -30,7 +107,7 @@ First let's start with how the I2C Stick command for I2C looks like: (please don
 ==> So there are three I2C flavors of the I2C command, we will use only the first and the last one!
 
 
-The next line will read 6 bytes from address 24E0 from slave 3A.
+The next line will instruct the I2C master hardware on the I2C Stick to read 6 bytes from address 24E0 from slave 3A.
 ```
 2024/10/29 09:14:45.118 <- i2c:3A:W24E0R06
 2024/10/29 09:14:45.120 -> i2c:3A:24E0:R:070B820D821D:OK
