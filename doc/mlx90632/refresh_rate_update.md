@@ -1,3 +1,19 @@
+# Procedure to update the refresh rate
+
+## Intro
+
+The refresh rate defines the integration time the ADC gets alotted for it's acquisition of the signals.  
+So the slower the refresh rate, the longer the integration time, and consequently the lower the noise on the reading will be.  
+The refresh rate can be programmed between 64 Hz and 0.5Hz meaning that the integration time can be set in a ragne from 16ms to 2 seconds.
+
+See datasheet for the noise impact: (https://melexis.com/mlx90632)
+![datasheet_refresh_rate_vs_noise.png](media/datasheet_refresh_rate_vs_noise)
+
+
+## The process
+
+The refresh rate setting resides in the EEPROM of the MLX90632. Therefore it is mandotory to select one refresh rate for your application and stick with it, as the re-programming will get you fast through the EEPROM erase/write cycles.
+
 Below is a listing from the I2C Stick console where I took one MLX90632, starting with the default refresh rate, then I erase both 24E1 and 24E2 addresses, then I write the new content.
 
 The `<-` sign indicates that what I entered in the console, while the `->` sign indicates the answer from the I2C Stick (and thus indirectly what MLX90632 answers on the I2C bus).
@@ -35,7 +51,6 @@ As mode is bit 1 & 2, the mode was 3, and it turns out all other bits were at ze
 
 The next command below, is `unlock`.  
 See datasheet: (https://melexis.com/mlx90632)
-image.png
 ![datasheet_unlock_eeprom_customer.png](media/datasheet_unlock_eeprom_customer.png)
 It is equivalent of writing 554C to address 3005.
 Note: you cannot read this to verify, and it will last only one write operation.
