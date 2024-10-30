@@ -19,7 +19,7 @@ The refresh rate setting resides in the EEPROM of the MLX90632. Therefore it is 
 ## I2C Stick
 
 As of writing this document the website has no UI to support refresh update.  
-However, the firmware does support it.
+However, the firmware does support it.  
 Meaning in the console one can sent a Configure Slave(cs) commands to set the refresh rate of the MLX90632, and after the update the sensor, as well as the plot will update according the selected refresh rate.
 
 Below is a listing from the I2C Stick console where we take one MLX90632, starting with the default refresh rate, then I erase both 24E1 and 24E2 addresses, then I write the new content.
@@ -127,9 +127,9 @@ Now we are entering the HALT mode, this is a mode where the MLX90632 goes to sle
 As mode is bit 1 & 2, the mode was 3, and it turns out all other bits were at zero, so mode HALT(0) corresponds to writing zero to 3001 (REG_CONTROL), the last command reads again, and it is confirmed 3001 is now 0000.
 
 The next command below, is `unlock`.  
-See datasheet: (https://melexis.com/mlx90632)
+See datasheet: (https://melexis.com/mlx90632)  
 ![datasheet_unlock_eeprom_customer.png](media/datasheet_unlock_eeprom_customer.png)
-It is equivalent of writing 554C to address 3005.
+It is equivalent of writing 554C to address 3005.  
 Note: you cannot read this to verify, and it will last only one write operation.
 
 ```
@@ -143,7 +143,7 @@ First write zeros into 24E1
 2024/10/29 09:23:44.886 <- i2c:3A:W24E0R06
 2024/10/29 09:23:44.889 -> i2c:3A:24E0:R:070B0000821D:OK
 ```
-Indeed, after a read 24E1 is now confirmed to be zero!
+Indeed, after a read 24E1 is now confirmed to be zero!  
 Next, again unlock, and erase 24E2
 
 ```
@@ -154,8 +154,8 @@ Next, again unlock, and erase 24E2
 2024/10/29 09:24:10.341 <- i2c:3A:W24E0R06       // read EEPROM
 2024/10/29 09:24:10.343 -> i2c:3A:24E0:R:070B00000000:OK
 ```
-Now both 24E1 and 24E2 are erased, let's reprogram, using refresh rate 4.
-See datasheet:
+Now both 24E1 and 24E2 are erased, let's reprogram, using refresh rate 4.  
+See datasheet:  
 ![datasheet_eemeas1_2_refresh_rate_table.png](media/datasheet_eemeas1_2_refresh_rate_table.png)
 Again we need to unlock the EEPROM, then write
 
@@ -173,7 +173,7 @@ Again we need to unlock the EEPROM, then write
 2024/10/29 09:27:28.057 <- i2c:3A:W24E0R06       // check / read
 2024/10/29 09:27:28.060 -> i2c:3A:24E0:R:070B840D841D:OK
 ```
-Now 24E1 and 24E2 are programmed to the desired value.
+Now 24E1 and 24E2 are programmed to the desired value.  
 Let's set the mode again to continuous, and check for a plausible temperature reading.
 ```
 2024/10/29 09:27:41.615 <- i2c:3A:W3001R02
@@ -183,7 +183,7 @@ Let's set the mode again to continuous, and check for a plausible temperature re
 2024/10/29 09:28:00.621 <- mv:3A                    // MV is the command 'Measure Value'
 2024/10/29 09:28:00.905 -> mv:3A:00808431:22.89,20.95
 ```
-TA=22.89 Deg C
+TA=22.89 Deg C  
 TO=20.95 Deg C
 
 Oooh! One last thing, we talked about three words EE_MEAS0/1/2 but you might also want to check that EE_MEAS3(24E3) is FFFF.
