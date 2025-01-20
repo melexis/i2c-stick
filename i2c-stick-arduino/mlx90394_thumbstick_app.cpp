@@ -64,15 +64,16 @@ cmd_90394_thumbstick_app_begin(uint8_t channel_mask)
   if (mlx90394_write_EN_T(g_sa) != 0) ok = 0;
   if (mlx90394_write_measurement_mode(g_sa, MLX90394_MODE_10Hz) != 0) ok = 0;
 
-  uint16_t byte = EEPROM.read(cal_x_offset_EE);
-  cal_x_offset = byte;
-  byte = EEPROM.read(cal_x_offset_EE+1);
-  cal_x_offset |= (byte << 8);
-
-  byte = EEPROM.read(cal_y_offset_EE);
-  cal_y_offset = byte;
-  byte = EEPROM.read(cal_y_offset_EE+1);
-  cal_y_offset |= (byte << 8);
+// temporary disable the EEPROM read function.
+//  uint16_t byte = EEPROM.read(cal_x_offset_EE);
+//  cal_x_offset = byte;
+//  byte = EEPROM.read(cal_x_offset_EE+1);
+//  cal_x_offset |= (byte << 8);
+//
+//  byte = EEPROM.read(cal_y_offset_EE);
+//  cal_y_offset = byte;
+//  byte = EEPROM.read(cal_y_offset_EE+1);
+//  cal_y_offset |= (byte << 8);
 
   if (ok)
   {
@@ -257,6 +258,42 @@ cmd_90394_thumbstick_ca_write(uint8_t channel_mask, const char *input)
   	  EEPROM.commit();
 
 			send_answer_chunk(channel_mask, ":CMD:NULL=OK", 1);
+    }
+    return;
+  }
+
+  var_name = "CAL_X=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int32_t new_value = atoi(input+strlen(var_name));
+    if ((new_value >= -32768) && (new_value <= 32767))
+    {
+      cal_x_offset = new_value;
+      EEPROM.write(cal_x_offset_EE  , cal_x_offset & 0x00FF);
+      EEPROM.write(cal_x_offset_EE+1, ((cal_x_offset & 0xFF00) >> 8) & 0x00FF);
+      EEPROM.commit();
+      send_answer_chunk(channel_mask, ":CAL_X=OK", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":CAL_X=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "CAL_Y=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int32_t new_value = atoi(input+strlen(var_name));
+    if ((new_value >= -32768) && (new_value <= 32767))
+    {
+      cal_y_offset = new_value;
+      EEPROM.write(cal_y_offset_EE  , cal_y_offset & 0x00FF);
+      EEPROM.write(cal_y_offset_EE+1, ((cal_y_offset & 0xFF00) >> 8) & 0x00FF);
+      EEPROM.commit();
+      send_answer_chunk(channel_mask, ":CAL_Y=OK", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":CAL_Y=FAIL; outbound", 1);
     }
     return;
   }
