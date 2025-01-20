@@ -20,6 +20,7 @@
 
 #include <stdlib.h>
 
+
 #ifdef ENABLE_USB_MSC // Mass Storage device Class
   // Un-comment to run example with custom SPI and SS e.g with FRAM breakout
   // #define CUSTOM_CS   A5
@@ -331,6 +332,8 @@ setup()
   uint8_t channel_mask = 0; // run quitely...
   handle_cmd(channel_mask, "scan"); // scan at startup!
   if (Serial) uart_welcome();
+
+  EEPROM.begin(512);
 }
 
 

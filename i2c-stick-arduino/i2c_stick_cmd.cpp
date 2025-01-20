@@ -979,13 +979,14 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   this_cmd = "+ca:"; // Config Application command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t app_id = atohex8(cmd+strlen(this_cmd));
-    uint8_t i = 0;
+    int16_t app_id = atoi(cmd+strlen(this_cmd));
     if (app_id < 0)
     {
       app_id = g_app_id;
     }
-    for (; i<strlen(cmd); i++)
+
+    uint8_t i = strlen(cmd)-1;
+    for (; i>0; i--)
     {
       if (cmd[i] == ':')
       {

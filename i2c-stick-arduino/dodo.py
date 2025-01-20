@@ -304,15 +304,26 @@ def task_arduino_install_libs():
     }
     libs = []
     if 'libraries' in context:
-        libs = context['libraries']
+        for l in context['libraries']:
+            libs.append(l)
+    for drv in context['drivers']:
+        if 'libraries' in drv:
+            for l in drv['libraries']:
+                libs.append(l)
+    for application in context['applications']:
+        if 'libraries' in application:
+            for l in application['libraries']:
+                libs.append(l)
+
     for lib in libs:
         lib_cli = ""
         lib_name = ""
         if 'name' in lib:
-            lib_cli = lib['name']
+            lib_cli += '"' + lib['name']
             lib_name = lib['name']
             if 'version' in lib:
                 lib_cli += "@" + str(lib['version'])
+            lib_cli += '"'
         elif 'git' in lib:
             lib_cli = '--git-url ' + lib['git']
             lib_name = lib['git'].split('/')[-1]

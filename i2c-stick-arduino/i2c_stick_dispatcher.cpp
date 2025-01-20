@@ -19,6 +19,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+
 int16_t 
 i2c_stick_register_all_drivers()
 {
@@ -584,16 +585,26 @@ cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input)
 uint8_t
 cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input)
 {
+  char buf[16]; memset(buf, 0, sizeof(buf));
+
   // 1. all is specific for each application
   switch(app_id)
   {
     case APP_NONE:
+      send_answer_chunk(channel_mask, "+ca:", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (no app selected)", 1);
       break;
     case APP_MLX90394_THUMBSTICK_ID:
       cmd_90394_thumbstick_ca_write(channel_mask, input);
       break;
     default:
-      return 0;
+      send_answer_chunk(channel_mask, "+ca:", 0);
+      itoa(app_id, buf, 10);
+      send_answer_chunk(channel_mask, buf, 0);
+      send_answer_chunk(channel_mask, ":FAILED (unregistered app id)", 1);
+      return APP_NONE;
   }
   return app_id;
 }

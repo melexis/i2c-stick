@@ -133,9 +133,6 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
                   <a title="Sent" class="button is-primary btn_sent">Sent</a>
               </p>
             </div>
-            <a title="Clear" class="button is-secondary btn_console_clear">Clear console</a>
-            <div>console:</div>
-            <div id="console"></div>
           </div>
           <div class="column is-4">
 
@@ -182,6 +179,9 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
             <div id="div_thumbstick_chart" style="display: inline-block; position: relative; width: 100%; height: 800px;">
               <canvas id="thumbstick_chart"  width="800" height="600">Your browser does not support the HTML5 canvas tag.</canvas>
             </div>
+            <div id="div_thumbstick_test">
+
+            </div>
           </div>
 
           <div class="column is-3">
@@ -200,9 +200,10 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
 
             <fieldset class="sidebar">
               <legend>App control</legend>
-              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan I2C Bus</button>
-              <button data-cmd="+app:1" title="Run thumbstick application" class="button cmd is-info btn_app_run">App Run</button> <!-- TODO temporary solution, the app number might change in the future -->
-              <button data-cmd="+app:0" title="Stop thumbstick application" class="button cmd is-info btn_app_stop">App Stop</button>
+              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan I2C</button>
+              <button data-cmd="+app:1" title="Run thumbstick application" class="button cmd is-info btn_app_run">Run</button> <!-- TODO temporary solution, the app number might change in the future -->
+              <button data-cmd="+app:0" title="Stop thumbstick application" class="button cmd is-info btn_app_stop">Stop</button>
+              <button data-cmd="+ca:1:CMD=NULL" title="Calibrate NULL position" class="button cmd is-info btn_app_null">CAL</button>
             </fieldset>
 
             <fieldset class="sidebar">

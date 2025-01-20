@@ -9,9 +9,21 @@
 #include <string.h>
 #include <math.h>
 
+#include <EEPROM.h> // EEPROM lib from Arduino
+
 
 static uint8_t g_sa = 0x00;
 static uint8_t g_we_disabled_sa = 0;
+
+static int16_t cal_x_offset = 0;
+static int16_t cal_y_offset = 0;
+
+static int16_t last_x = 0;
+static int16_t last_y = 0;
+
+static int16_t cal_x_offset_EE = 0;
+static int16_t cal_y_offset_EE = 2;
+
 
 
 uint8_t
@@ -26,6 +38,12 @@ cmd_90394_thumbstick_app_begin(uint8_t channel_mask)
   {
 		for (uint8_t sa = 1; sa<128; sa++)
 		{
+			send_answer_chunk(channel_mask, "==> app begin:", 0);
+			sprintf(buf, "%02X", sa);
+			send_answer_chunk(channel_mask, buf, 0);
+			send_answer_chunk(channel_mask, " -- ", 0);
+			sprintf(buf, "%d", g_sa_list[sa].found_);
+			send_answer_chunk(channel_mask, buf, 1);
 			if (g_sa_list[sa].found_)
 			{
 				char buf[16]; memset(buf, 0, sizeof(buf));
@@ -45,6 +63,16 @@ cmd_90394_thumbstick_app_begin(uint8_t channel_mask)
   if (mlx90394_write_EN_Z(g_sa) != 0) ok = 0;
   if (mlx90394_write_EN_T(g_sa) != 0) ok = 0;
   if (mlx90394_write_measurement_mode(g_sa, MLX90394_MODE_10Hz) != 0) ok = 0;
+
+  uint16_t byte = EEPROM.read(cal_x_offset_EE);
+  cal_x_offset = byte;
+  byte = EEPROM.read(cal_x_offset_EE+1);
+  cal_x_offset |= (byte << 8);
+
+  byte = EEPROM.read(cal_y_offset_EE);
+  cal_y_offset = byte;
+  byte = EEPROM.read(cal_y_offset_EE+1);
+  cal_y_offset |= (byte << 8);
 
   if (ok)
   {
@@ -97,6 +125,13 @@ handle_90394_thumbstick_app(uint8_t channel_mask)
       y = -y;
       z = -z;
     }
+    last_x = x;
+    last_y = y;
+
+    x -= cal_x_offset;
+    y -= cal_y_offset;
+
+
     heading = fmodf(atan2(x, y) + 2*M_PI, 2*M_PI)*180/M_PI;
     deflect = atan2(sqrt(x*x + y*y), z)*180/M_PI;
 
@@ -167,10 +202,62 @@ cmd_90394_thumbstick_ca(uint8_t channel_mask, const char *input)
   send_answer_chunk(channel_mask, ":SA=", 0);
   uint8_to_hex(buf, g_sa);
   send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "ca:", 0);
+  itoa(APP_MLX90394_THUMBSTICK_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":CAL_X=", 0);
+  itoa(cal_x_offset, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
+
+  send_answer_chunk(channel_mask, "ca:", 0);
+  itoa(APP_MLX90394_THUMBSTICK_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":CAL_Y=", 0);
+  itoa(cal_y_offset, buf, 10);
+  send_answer_chunk(channel_mask, buf, 1);
 }
 
 
 void
 cmd_90394_thumbstick_ca_write(uint8_t channel_mask, const char *input)
 {
+  char buf[16]; memset(buf, 0, sizeof(buf));
+  send_answer_chunk(channel_mask, "+ca:", 0);
+  itoa(APP_MLX90394_THUMBSTICK_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+
+  const char *var_name = "SA=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    int16_t new_sa = atohex8(input+strlen(var_name));
+    if ((new_sa >= 3) && (new_sa <= 126))
+    { // only allow valid SA's
+    	g_sa = new_sa;
+      send_answer_chunk(channel_mask, ":SA=OK", 1);
+    } else
+    {
+      send_answer_chunk(channel_mask, ":SA=FAIL; outbound", 1);
+    }
+    return;
+  }
+
+  var_name = "CMD=";
+  if (!strncmp(var_name, input, strlen(var_name)))
+  {
+    if (!strcasecmp(input+strlen(var_name), "NULL"))
+    {
+			cal_x_offset = last_x;
+			cal_y_offset = last_y;
+
+  		EEPROM.write(cal_x_offset_EE  , cal_x_offset & 0x00FF);
+  		EEPROM.write(cal_x_offset_EE+1, ((cal_x_offset & 0xFF00) >> 8) & 0x00FF);
+  		EEPROM.write(cal_y_offset_EE  , cal_y_offset & 0x00FF);
+  		EEPROM.write(cal_y_offset_EE+1, ((cal_y_offset & 0xFF00) >> 8) & 0x00FF);
+  	  EEPROM.commit();
+
+			send_answer_chunk(channel_mask, ":CMD:NULL=OK", 1);
+    }
+    return;
+  }
 }

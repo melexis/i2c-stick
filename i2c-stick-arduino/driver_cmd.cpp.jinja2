@@ -142,7 +142,7 @@ cmd_{{driver.function_id}}_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, ch
     cmd_{{driver.function_id}}_init(sa);
   }
 
-  if (*mv_count <= 2) // check Measurement Value buffer length
+  if (*mv_count < 2) // check Measurement Value buffer length
   {
     *mv_count = 0;
     *error_message = {{driver.name}}_ERROR_BUFFER_TOO_SMALL;

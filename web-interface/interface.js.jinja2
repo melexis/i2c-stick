@@ -39,7 +39,7 @@ var spatial_previous_orientation = 0;
 var connected_slaves = {};
 var heat_map_gradient_colors = null;
 
-var thumbstick_max_deflection = 2;
+var thumbstick_max_deflection = 10;
 
 
 function set_terminal_height()
@@ -84,7 +84,7 @@ function set_spatial_chart_height()
     ctx.fillStyle = "black";
     ctx.font = "20px Courier New";
     ctx.fillText("Spatial chart will show a thermal image", 20, 50);
-    ctx.fillText("for MLX90640 and MLX90641 only", 20, 80);
+    ctx.fillText("for MLX90640, MLX90641 and MLX90642 only", 20, 80);
 
   }, 100);
 }
@@ -765,6 +765,10 @@ $(document).ready(function () {
           cols = 16;
           is_supported = true;
         }
+        if (connected_slaves[sa].device == "MLX90642")
+        {
+          is_supported = true;
+        }
         if (connected_slaves[sa].device == "MLX90621")
         {
           rows = 16;
@@ -1413,7 +1417,7 @@ $("#lbl_selected_port").click(async () => {
 });
 
 $(".btn_app_run").click(async () => {
-	thumbstick_max_deflection = 2;
+	thumbstick_max_deflection = 10;
 });
 
 $("#btn_open_port").click(async () => {
