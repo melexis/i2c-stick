@@ -76,6 +76,7 @@ void send_answer_chunk_binary(uint8_t channel_mask, const char *blob, uint16_t l
 
 
 int16_t i2c_stick_register_driver(uint8_t sa, uint8_t drv);
+uint8_t i2c_stick_get_current_slave_with_driver(uint8_t drv);
 
 #ifdef __cplusplus
 }

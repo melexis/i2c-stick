@@ -1,0 +1,4 @@
+function_id: 90394_joystick
+name: MLX90394_JOYSTICK
+src_name: mlx90394_joystick
+disable: 0

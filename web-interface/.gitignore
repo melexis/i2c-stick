@@ -5,3 +5,4 @@ tools
 __pycache__
 firmware_list.md
 interface.js
+*.css.map

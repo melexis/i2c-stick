@@ -12,8 +12,10 @@
 #include "mlx90632_cmd.h"
 #include "mlx90640_cmd.h"
 #include "mlx90641_cmd.h"
+#include "mlx90642_cmd.h"
 
 // Include all the applications header files:
+#include "mlx90394_joystick_app.h"
 #include "mlx90394_thumbstick_app.h"
 
 #include <string.h>
@@ -29,6 +31,7 @@ i2c_stick_register_all_drivers()
   if (cmd_90632_register_driver() < 0) result = -1;
   if (cmd_90640_register_driver() < 0) result = -1;
   if (cmd_90641_register_driver() < 0) result = -1;
+  if (cmd_90642_register_driver() < 0) result = -1;
   return result;
 }
 
@@ -48,6 +51,8 @@ i2c_stick_get_drv_name_by_drv(uint8_t drv)
       return DRV_MLX90640_NAME;
     case DRV_MLX90641_ID:
       return DRV_MLX90641_NAME;
+    case DRV_MLX90642_ID:
+      return DRV_MLX90642_NAME;
     default:
       if (0) {}
   }
@@ -63,6 +68,7 @@ i2c_stick_get_drv_by_drv_name(const char *drv_name)
   if (!strcasecmp(drv_name, DRV_MLX90632_NAME)) return DRV_MLX90632_ID;
   if (!strcasecmp(drv_name, DRV_MLX90640_NAME)) return DRV_MLX90640_ID;
   if (!strcasecmp(drv_name, DRV_MLX90641_NAME)) return DRV_MLX90641_ID;
+  if (!strcasecmp(drv_name, DRV_MLX90642_NAME)) return DRV_MLX90642_ID;
   return 0;
 }
 
@@ -72,6 +78,8 @@ i2c_stick_get_app_name(uint8_t app_id)
 {
   switch(app_id)
   {
+    case APP_MLX90394_JOYSTICK_ID:
+      return APP_MLX90394_JOYSTICK_NAME;
     case APP_MLX90394_THUMBSTICK_ID:
       return APP_MLX90394_THUMBSTICK_NAME;
     default:
@@ -84,6 +92,7 @@ i2c_stick_get_app_name(uint8_t app_id)
 uint8_t
 i2c_stick_get_app_id(const char *app_name)
 {
+  if (!strcasecmp(app_name, APP_MLX90394_JOYSTICK_NAME)) return APP_MLX90394_JOYSTICK_ID;
   if (!strcasecmp(app_name, APP_MLX90394_THUMBSTICK_NAME)) return APP_MLX90394_THUMBSTICK_ID;
   return APP_NONE;
 }
@@ -116,6 +125,9 @@ cmd_mv(uint8_t sa, float *mv_list, uint16_t *mv_count, char const **error_messag
       break;
     case DRV_MLX90641_ID:
       cmd_90641_mv(sa, mv_list, mv_count, error_message);
+      break;
+    case DRV_MLX90642_ID:
+      cmd_90642_mv(sa, mv_list, mv_count, error_message);
       break;
     default:
       return 0;
@@ -150,6 +162,9 @@ cmd_raw(uint8_t sa, uint16_t *raw_list, uint16_t *raw_count, char const **error_
     case DRV_MLX90641_ID:
       cmd_90641_raw(sa, raw_list, raw_count, error_message);
       break;
+    case DRV_MLX90642_ID:
+      cmd_90642_raw(sa, raw_list, raw_count, error_message);
+      break;
     default:
       return 0;
   }
@@ -183,6 +198,9 @@ cmd_nd(uint8_t sa, uint8_t *nd, char const **error_message)
     case DRV_MLX90641_ID:
       cmd_90641_nd(sa, nd, error_message);
       break;
+    case DRV_MLX90642_ID:
+      cmd_90642_nd(sa, nd, error_message);
+      break;
     default:
       return 0;
   }
@@ -215,6 +233,9 @@ cmd_sn(uint8_t sa, uint16_t *sn_list, uint16_t *sn_count, char const **error_mes
       break;
     case DRV_MLX90641_ID:
       cmd_90641_sn(sa, sn_list, sn_count, error_message);
+      break;
+    case DRV_MLX90642_ID:
+      cmd_90642_sn(sa, sn_list, sn_count, error_message);
       break;
     default:
       *sn_count = 0;
@@ -259,6 +280,9 @@ cmd_cs(uint8_t sa, uint8_t channel_mask, const char *input)
       break;
     case DRV_MLX90641_ID:
       cmd_90641_cs(sa, channel_mask, input);
+      break;
+    case DRV_MLX90642_ID:
+      cmd_90642_cs(sa, channel_mask, input);
       break;
     default:
       return 0;
@@ -326,6 +350,9 @@ cmd_cs_write(uint8_t sa, uint8_t channel_mask, const char *input)
     case DRV_MLX90641_ID:
       cmd_90641_cs_write(sa, channel_mask, input);
       break;
+    case DRV_MLX90642_ID:
+      cmd_90642_cs_write(sa, channel_mask, input);
+      break;
     default:
       return 0;
   }
@@ -358,6 +385,9 @@ cmd_mr(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
       break;
     case DRV_MLX90641_ID:
       cmd_90641_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
+    case DRV_MLX90642_ID:
+      cmd_90642_mr(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
     default:
       return 0;
@@ -393,6 +423,9 @@ cmd_mw(uint8_t sa, uint16_t *mem_list, uint16_t mem_start_address, uint16_t mem_
     case DRV_MLX90641_ID:
       cmd_90641_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
       break;
+    case DRV_MLX90642_ID:
+      cmd_90642_mw(sa, mem_list, mem_start_address, mem_count, bit_per_address, address_increments, error_message);
+      break;
     default:
       return 0;
   }
@@ -426,6 +459,9 @@ cmd_is(uint8_t sa, uint8_t drv, uint8_t *is_ok, char const **error_message)
       break;
     case DRV_MLX90641_ID:
       cmd_90641_is(sa, is_ok, error_message);
+      break;
+    case DRV_MLX90642_ID:
+      cmd_90642_is(sa, is_ok, error_message);
       break;
     default:
       return 0;
@@ -470,6 +506,9 @@ cmd_tear_down(uint8_t sa)
     case DRV_MLX90641_ID:
       cmd_90641_tear_down(sa);
       break;
+    case DRV_MLX90642_ID:
+      cmd_90642_tear_down(sa);
+      break;
     default:
       return 0;
   }
@@ -482,6 +521,11 @@ cmd_la(uint8_t channel_mask)
 {
   uint8_t count = 0;
   char buf[16]; memset(buf, 0, sizeof(buf));
+  send_answer_chunk(channel_mask, "la:", 0);
+  itoa(APP_MLX90394_JOYSTICK_ID, buf, 10);
+  send_answer_chunk(channel_mask, buf, 0);
+  send_answer_chunk(channel_mask, ":" APP_MLX90394_JOYSTICK_NAME, 1);
+  count++;
   send_answer_chunk(channel_mask, "la:", 0);
   itoa(APP_MLX90394_THUMBSTICK_ID, buf, 10);
   send_answer_chunk(channel_mask, buf, 0);
@@ -509,6 +553,8 @@ cmd_app_begin(uint8_t app_id, uint8_t channel_mask)
       send_answer_chunk(channel_mask, buf, 0);
       send_answer_chunk(channel_mask, ":OK", 1);
       break;
+    case APP_MLX90394_JOYSTICK_ID:
+      return cmd_90394_joystick_app_begin(channel_mask);
     case APP_MLX90394_THUMBSTICK_ID:
       return cmd_90394_thumbstick_app_begin(channel_mask);
     default:
@@ -529,6 +575,10 @@ cmd_app_end(uint8_t channel_mask)
   {
     case APP_NONE:
       break;
+    case APP_MLX90394_JOYSTICK_ID:
+      cmd_90394_joystick_app_end(channel_mask);
+      g_app_id = APP_NONE;
+      break;
     case APP_MLX90394_THUMBSTICK_ID:
       cmd_90394_thumbstick_app_end(channel_mask);
       g_app_id = APP_NONE;
@@ -546,6 +596,9 @@ handle_applications(uint8_t channel_mask)
   switch(g_app_id)
   {
     case APP_NONE:
+      break;
+    case APP_MLX90394_JOYSTICK_ID:
+      handle_90394_joystick_app(channel_mask);
       break;
     case APP_MLX90394_THUMBSTICK_ID:
       handle_90394_thumbstick_app(channel_mask);
@@ -567,6 +620,9 @@ cmd_ca(uint8_t app_id, uint8_t channel_mask, const char *input)
       itoa(APP_NONE, buf, 10);
       send_answer_chunk(channel_mask, buf, 0);
       send_answer_chunk(channel_mask, ":none", 1);
+      break;
+    case APP_MLX90394_JOYSTICK_ID:
+      cmd_90394_joystick_ca(channel_mask, input);
       break;
     case APP_MLX90394_THUMBSTICK_ID:
       cmd_90394_thumbstick_ca(channel_mask, input);
@@ -595,6 +651,9 @@ cmd_ca_write(uint8_t app_id, uint8_t channel_mask, const char *input)
       itoa(app_id, buf, 10);
       send_answer_chunk(channel_mask, buf, 0);
       send_answer_chunk(channel_mask, ":FAILED (no app selected)", 1);
+      break;
+    case APP_MLX90394_JOYSTICK_ID:
+      cmd_90394_joystick_ca_write(channel_mask, input);
       break;
     case APP_MLX90394_THUMBSTICK_ID:
       cmd_90394_thumbstick_ca_write(channel_mask, input);

@@ -181,7 +181,8 @@ def task_install_nodejs():
             'windows': 'win',
             'darwin': 'darwin',
         }
-        node_url = "https://nodejs.org/download/release/latest-v19.x"
+        # node_url = "https://nodejs.org/download/release/latest-v19.x"
+        node_url = "https://nodejs.org/download/release/latest-v24.x"
         parser = MyHTMLParser()
         fp = urllib.request.urlopen(node_url)
         html = fp.read().decode("utf8")
@@ -284,7 +285,7 @@ def task_install_pandoc():
             'darwin': 'x86_64-macOS.zip',
         }
         suffix = suffix_dict[this_system]
-        version = '3.1.9'
+        version = '3.8'
 
         url = f"https://github.com/jgm/pandoc/releases/download/{version}/pandoc-{version}-{suffix}"
 
@@ -377,7 +378,7 @@ def task_generate():
             'actions': [(do_generate, [jinja2_file.name, output_file.name])],
             'file_dep': [jinja2_file.name],
             'clean': True,
-            'task_dep': ['pip:requirements.txt'],
+            'task_dep': ['pip:requirements.txt', 'convert-md:app_modal*.html',],
             'targets': [output_file.name],
             'title': show_cmd,
         }

@@ -4,7 +4,7 @@
   "description": "",
   "main": "sass/melexis-bulma.scss",
   "scripts": {
-    "css-build": "node-sass --omit-source-map-url sass/melexis-bulma.scss ../melexis-bulma.css",
+    "css-build": "sass sass/melexis-bulma.scss ../melexis-bulma.css",
     "css-watch": "npm run css-build -- --watch",
     "start": "npm run css-watch"
   },
@@ -13,9 +13,9 @@
   "dependencies": {
     "bulma": "^0.9.4",
     "cssnano": "^6.0.1",
-    "node-sass": "^8.0.0",
-    "postcss": "^8.4.31",
     "cssnano-cli": "^1.0.5",
+    "postcss": "^8.4.31",
+    "sass": "^1.92.1",
     "terser": "^5.24.0"
   }
 }

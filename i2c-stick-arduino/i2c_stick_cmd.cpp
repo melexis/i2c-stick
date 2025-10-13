@@ -11,7 +11,6 @@
 // arduino should not be here, it is only to ease debugging
 // #include <Arduino.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -979,33 +978,43 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   this_cmd = "+ca:"; // Config Application command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t app_id = atoi(cmd+strlen(this_cmd));
-    if (app_id < 0)
+    char app_id_str[32]; memset(app_id_str, 0, sizeof(app_id_str));
+    // Copy from cmd+strlen(this_cmd) to app_id_str until ':' or end of string
+    size_t j = 0;
+    for (size_t k = strlen(this_cmd); cmd[k] != '\0' && cmd[k] != ':' && j < sizeof(app_id_str) - 1; ++k, ++j) {
+      app_id_str[j] = cmd[k];
+    }
+    app_id_str[j] = '\0';
+    const char *parameters = cmd + strlen(this_cmd) + j + 1;
+
+    int16_t app_id = i2c_stick_get_app_id(app_id_str);
+    if (app_id == APP_NONE)
     {
-      app_id = g_app_id;
+      app_id = atoi(app_id_str);
+    }
+    if ((app_id < 0) || (app_id >= 256))
+    {
+      send_answer_chunk(channel_mask, "+ca:FAILED (invalid APP id)", 1);
+    } else
+    {
+      cmd_ca_write(app_id, channel_mask, parameters);
     }
 
-    uint8_t i = strlen(cmd)-1;
-    for (; i>0; i--)
-    {
-      if (cmd[i] == ':')
-      {
-        i++;
-        break;
-      }
-    }
-
-    cmd_ca_write(app_id, channel_mask, cmd+i);
     return NULL;
   }
 
   this_cmd = "app"; // APPlication command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
+    const char *app_id_str = cmd+strlen(this_cmd);
     int16_t app_id = g_app_id;
     if (cmd[strlen(this_cmd)] == ':')
     {
-      app_id = atoi(cmd+strlen(this_cmd)+1);
+      app_id = i2c_stick_get_app_id(app_id_str);
+      if (app_id == APP_NONE)
+      {
+        app_id = atoi(app_id_str);
+      }
     }
 
     send_answer_chunk(channel_mask, "app:", 0);
@@ -1026,7 +1035,12 @@ handle_cmd(uint8_t channel_mask, const char *cmd)
   this_cmd = "+app:"; // APPlication command
   if (!strncmp(this_cmd, cmd, strlen(this_cmd)))
   {
-    int16_t app_id = atoi(cmd+strlen(this_cmd));
+    const char *app_id_str = cmd+strlen(this_cmd);
+    int16_t app_id = i2c_stick_get_app_id(app_id_str);
+    if (app_id == APP_NONE)
+    {
+      app_id = atoi(app_id_str);
+    }
 
     send_answer_chunk(channel_mask, "+app", 0);
 

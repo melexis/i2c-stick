@@ -13,3 +13,6 @@ web-interface/melexis-bulma.css
 venv
 .doit.db*
 __pycache__
+.vscode
+*.pyc
+*.bak

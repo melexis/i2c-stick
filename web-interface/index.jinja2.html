@@ -50,7 +50,7 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
     <div class="navbar-end">
       <div class="navbar-item">
         <div class="buttons">
-          <a id="site_version" title="Release" class="button is-info is-outlined is-small">V1.5.2</a>
+          <a id="site_version" title="Release" class="button is-info is-outlined is-small">V1.6.0</a>
           <a id="lbl_selected_port" title="VID/PID of selected serial port" class="button is-info is-outlined is-small">USB</a>
           <a id="btn_open_port" class="button is-primary is-outlined">Open</a>
           <a id="btn_close_port" class="button is-primary is-outlined">Close</a>
@@ -112,8 +112,10 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
       <div id="interface_tabs" class="tabs is-fullwidth is-no-margin">
         <ul>
           <li id="tab_int_transient" class="is-active"><a>Transient chart</a></li>
-          <li id="tab_int_spatial"><a>Spatial chart</a></li>
-          <li id="tab_int_thumbstick"><a>Thumbstick</a></li>
+          <li id="tab_int_spatial" class="app-tab is-hidden"><a>Thermal Image</a></li>
+          <li id="tab_int_thumbstick" class="app-tab is-hidden"><a>2D Thumb stick</a></li>
+          <li id="tab_int_joystick" class="app-tab is-hidden"><a>Joystick</a></li>
+          <li id="tab_int_apps"><a>Applications</a></li>
           <li id="tab_int_terminal"><a>Terminal</a></li>
         </ul>
       </div>
@@ -201,9 +203,8 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
             <fieldset class="sidebar">
               <legend>App control</legend>
               <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan I2C</button>
-              <button data-cmd="+app:1" title="Run thumbstick application" class="button cmd is-info btn_app_run">Run</button> <!-- TODO temporary solution, the app number might change in the future -->
+              <button data-cmd="+app:MLX90394_THUMBSTICK" title="Run thumbstick application" class="button cmd is-info btn_app_run">Run</button>
               <button data-cmd="+app:0" title="Stop thumbstick application" class="button cmd is-info btn_app_stop">Stop</button>
-<!--              <button data-cmd="+ca:1:CMD=NULL" title="Calibrate NULL position" class="button cmd is-info btn_app_null">CAL</button>-->
             </fieldset>
 
             <fieldset class="sidebar">
@@ -214,6 +215,149 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
             </fieldset>
           </div>
         </div>
+      </div>
+
+      <div id="div_int_joystick" class="tab_content content is-no-margin">
+        <div class="columns">
+          <div class="column is-9" style="padding-bottom: 0px;">
+            <div id="div_joystick_chart" style="display: inline-block; position: relative; width: 100%; height: 800px;">
+              <canvas id="joystick_chart"  width="800" height="600">Your browser does not support the HTML5 canvas tag.</canvas>
+            </div>
+            <div id="div_joystick_test">
+
+            </div>
+          </div>
+
+          <div class="column is-3">
+            <div class="checkboxes">
+              <div class="select is-fullwidth is-small is-link">
+                <select name="combo_i2c_freq" class="combo_i2c_freq">
+                  <option value="F10k" >I2C - 10kHz</option>
+                  <option value="F20k" >I2C - 20kHz</option>
+                  <option value="F50k" >I2C - 50kHz</option>
+                  <option value="F100k" selected>I2C - 100kHz(default)</option>
+                  <option value="F400k">I2C - 400kHz</option>
+                  <option value="F1M"  >I2C - 1MHz</option>
+                </select>
+              </div>
+            </div>
+
+            <fieldset class="sidebar">
+              <legend>App control</legend>
+              <button data-cmd="scan" title="Scan the I2C bus for slave sensors" class="button cmd is-info btn_scan">Scan I2C</button>
+              <button data-cmd="+app:MLX90394_JOYSTICK" title="Run joystick application" class="button cmd is-info btn_app_run">Run</button>
+              <button data-cmd="+app:0" title="Stop joystick application" class="button cmd is-info btn_app_stop">Stop</button>
+              <button data-cmd="+ca:MLX90394_JOYSTICK:CMD=NULL" title="Calibrate NULL position" class="button cmd is-info btn_app_null">CAL</button>
+            </fieldset>
+
+            <fieldset class="sidebar">
+              <legend>I2C Slaves</legend>
+              <div id="joystick_chart_slaves" class="slaves">
+                No slaves found; connect slaves and click `scan` button
+              </div>
+            </fieldset>
+          </div>
+        </div>
+      </div>
+
+      <div id="div_int_apps" class="tab_content content">
+          <div class="columns is-multiline is-desktop is-flex">
+            <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
+                <div class="card is-flex-grow-1">
+                    <div class="card-image open-app" data-app-name="MLX9064X_THERMAL_IMAGE">
+                        <figure class="image is-4by3">
+                          <img src="assets/apps/thermal_camera/thermal_camera.png"/>
+                        </figure>
+                    </div>
+                    <header class="card-header">
+                        <p class="card-header-title">Thermal Image</p>
+                    </header>
+                    <div class="card-content">
+                        <p>Seeing temperature with MLX90640, MLX90641 or MLX90642!</p>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="#" class="card-footer-item open-app" data-app-name="MLX9064X_THERMAL_IMAGE">Open</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
+                <div class="card is-flex-grow-1">
+                    <div class="card-image open-app" data-app-name="MLX90394_THUMBSTICK">
+                        <figure class="image is-4by3">
+                          <img src="assets/apps/2d_thumbstick/2d_thumbstick_icon.png"/>
+                        </figure>
+                    </div>
+                    <header class="card-header">
+                        <p class="card-header-title">2D Thumbstick</p>
+                    </header>
+                    <div class="card-content">
+                        <p>2D Thumbstick demo with MLX90394.</p>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="#" class="card-footer-item open-app" data-app-name="MLX90394_THUMBSTICK">Open</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
+                <div class="card is-flex-grow-1">
+                    <div class="card-image open-app" data-app-name="MLX90394_JOYSTICK">
+                        <figure class="image is-4by3">
+                          <img src="assets/apps/joystick/joystick_icon.png"/>
+                        </figure>
+                    </div>
+                    <header class="card-header">
+                        <p class="card-header-title">Joystick</p>
+                    </header>
+                    <div class="card-content">
+                        <p>Joystick demo with MLX90394.</p>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="#" class="card-footer-item open-app" data-app-name="MLX90394_JOYSTICK">Open</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
+                <div class="card is-flex-grow-1">
+                    <div class="card-image open-app" data-app-name="MLX90642_PEOPLE_DETECTION">
+                        <figure class="image is-4by3">
+                          <img src="assets/apps/people_detection/people_detection.png"/>
+                        </figure>
+                    </div>
+                    <header class="card-header">
+                        <p class="card-header-title">People detection</p>
+                    </header>
+                    <div class="card-content">
+                        <p>People detection demo with MLX90642.</p>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="#" class="card-footer-item open-app" data-app-name="MLX90642_PEOPLE_DETECTION">Open</a>
+                    </footer>
+                </div>
+            </div>
+
+            <div class="column is-one-third-desktop is-half-tablet is-full-mobile">
+                <div class="card is-flex-grow-1">
+                    <div class="card-image open-app" data-app-name="MLX90617_INDUCTION_COOKTOP">
+                        <figure class="image is-4by3">
+                          <img src="assets/apps/induction_cooktop/induction_cooktop.webp"/>
+                        </figure>
+                    </div>
+                    <header class="card-header">
+                        <p class="card-header-title">Look-through-glass</p>
+                    </header>
+                    <div class="card-content">
+                        <p>Look-through-glass induction cooktop demo with MLX90617 and MLX90614.</p>
+                    </div>
+                    <footer class="card-footer">
+                        <a href="#" class="card-footer-item open-app" data-app-name="MLX90617_INDUCTION_COOKTOP">Open</a>
+                    </footer>
+                </div>
+            </div>
+
+          </div>
       </div>
 
       <div id="div_int_spatial" class="tab_content content is-no-margin">
@@ -337,6 +481,24 @@ Events in Javascript: https://developer.mozilla.org/en-US/docs/Web/Events/Creati
     </footer>
   </div>
 </div>
+
+<div class="modal" id="app-modal">
+  <div class="modal-background"></div>
+  <div class="modal-card">
+      <header class="modal-card-head">
+          <p class="modal-card-title">Application</p>
+          <button class="delete" aria-label="close"></button>
+      </header>
+      <section class="modal-card-body">
+          <div class="modal-content"></div>
+      </section>
+      <footer class="modal-card-foot" style="justify-content: flex-end;">
+          <button class="button is-primary btn-open-application">Open Application</button>
+      </footer>
+  </div>
+</div>
+
+
 
 </body>
 <script type="text/javascript" src="./assets/site/jquery-3.6.1.min.js"></script>

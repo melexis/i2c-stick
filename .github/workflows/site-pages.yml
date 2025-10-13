@@ -16,6 +16,8 @@ permissions:
   pages: write
   id-token: write
 
+
+
 # Allow one concurrent deployment
 concurrency:
   group: "pages"
@@ -27,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Install python requirements for web-interface
@@ -48,7 +50,7 @@ jobs:
             readme.md
             i2c-stick-${{ github.ref_name }}.zip
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: dist/
 
@@ -62,4 +64,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v1
+        uses: actions/deploy-pages@v4
+

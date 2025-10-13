@@ -65,3 +65,17 @@ i2c_stick_register_driver(uint8_t sa, uint8_t drv)
 }
 
 
+// Returns the first slave address in g_sa_list that uses the given driver
+// Returns 0 if not found
+uint8_t i2c_stick_get_current_slave_with_driver(uint8_t drv)
+{
+  for (int i = 0; i < sizeof(g_sa_list)/sizeof(g_sa_list[0]); ++i) {
+    if (g_sa_list[i].found_) {
+      uint8_t spot = g_sa_list[i].spot_;
+      if (g_sa_drv_register[spot].drv_ == drv) {
+        return g_sa_drv_register[spot].sa_;
+      }
+    }
+  }
+  return 0;
+}

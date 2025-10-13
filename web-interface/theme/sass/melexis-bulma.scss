@@ -49,8 +49,10 @@ $modal-background-background-color: bulmaRgba($scheme-invert, 0.75);
 @import "../node_modules/bulma/sass/components/navbar.sass";
 @import "../node_modules/bulma/sass/components/tabs.sass";
 @import "../node_modules/bulma/sass/components/modal.sass";
+@import "../node_modules/bulma/sass/components/card.sass";
 @import "../node_modules/bulma/sass/layout/hero.sass";
 @import "../node_modules/bulma/sass/layout/section.sass";
+@import "../node_modules/bulma/sass/helpers/visibility.sass";
 
 
 @font-face {
@@ -224,4 +226,29 @@ pre{
   font-size: 10px;
   display: inline;
   background-color: transparent;
+}
+
+/* Ensure all .card-content in a flex row have equal height */
+.columns.is-flex, .columns.is-multiline.is-flex {
+		display: flex;
+		flex-wrap: wrap;
+}
+.columns.is-flex .card,
+.columns.is-multiline.is-flex .card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.columns.is-flex .card-content,
+.columns.is-multiline.is-flex .card-content {
+  flex-grow: 1;
+		display: flex;
+		flex-direction: column;
+  justify-content: flex-start;
+}
+/* End-of: Ensure all .card-content in a flex row have equal height */
+
+div.card-image > figure {
+    margin-left: 0em;
+    margin-right: 0em;
 }
